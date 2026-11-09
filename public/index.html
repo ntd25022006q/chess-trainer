@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess.com — Xem lại ván đấu (Game Review)</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/css/style.css?v=4.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+  <!-- Authentic Chess.com Clean Top Navigation -->
+  <header class="chesscom-top-nav">
+    <div class="nav-brand">
+      <svg class="chesscom-pawn-logo" viewBox="0 0 24 24" width="22" height="22" fill="#81b64c">
+        <path d="M12 2a4 4 0 0 0-4 4c0 1.25.58 2.37 1.48 3.11A5.02 5.02 0 0 0 6 14v1h12v-1a5.02 5.02 0 0 0-3.48-4.89A3.99 3.99 0 0 0 16 6a4 4 0 0 0-4-4zm-7 15v2h14v-2H5zm-1 3v2h16v-2H4z"/>
+      </svg>
+      <span class="chesscom-brand-name">chess.com</span>
+      <span class="nav-path-separator">/</span>
+      <span class="nav-subpath">Xem lại ván đấu</span>
+    </div>
+
+    <!-- Minimalist URL Import Search Bar -->
+    <div class="nav-url-search">
+      <span class="url-input-icon">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="#888">
+          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+      </span>
+      <input type="text" id="topGameUrlInput" class="nav-url-input" value="https://www.chess.com/game/live/184609437048" placeholder="Dán link ván cờ: https://www.chess.com/game/live/...">
+      <button id="btnTopAnalyze" class="btn-url-analyze">Phân tích</button>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main class="app-container">
+    <!-- Left Column: Board & Players -->
+    <section class="left-section">
+      <!-- Black Player Info Card (Screenshot 1: CM Witty_Alien 2612) -->
+      <div class="player-card opponent-card" id="topPlayerCard">
+        <div class="player-avatar-box">
+          <img id="blackAvatarImg" class="player-avatar-img" referrerpolicy="no-referrer" onerror="this.src='/assets/default-user.svg'" src="/assets/default-user.svg" alt="">
+        </div>
+        <div class="player-meta">
+          <div class="player-name-row">
+            <span class="chess-title-tag cm" id="blackTitleTag">CM</span>
+            <span class="player-name" id="blackPlayerName">Witty_Alien</span>
+            <span class="player-elo" id="blackEloTag">(2612)</span>
+            <span class="player-flag" id="blackFlagTag">🇺🇦</span>
+          </div>
+          <div class="captured-row" id="capturedBlackPieces"></div>
+        </div>
+        <div class="player-clock-box">
+          <span class="clock-icon">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+            </svg>
+          </span>
+          <span class="clock-time" id="blackClockTime">5:00</span>
+        </div>
+      </div>
+
+      <!-- Chessboard Centerpiece with Eval Bar -->
+      <div class="board-area">
+        <!-- Vertical Evaluation Bar (Matches Screenshots 1, 3, 4) -->
+        <div class="eval-bar-wrapper" title="Thanh đánh giá lợi thế Stockfish 16">
+          <div class="eval-score-label top-label hidden" id="evalScoreTop">-4.80</div>
+          <div class="eval-bar">
+            <div class="eval-fill-black"></div>
+            <div class="eval-fill-white" id="evalFill" style="height: 52%;"></div>
+          </div>
+          <div class="eval-score-label bottom-label" id="evalScoreBottom">0.0</div>
+        </div>
+
+        <!-- 8x8 Chessboard Container -->
+        <div class="board-container" id="boardContainer"></div>
+      </div>
+
+      <!-- White Player Info Card (Screenshot 1: GM MagnusCarlsen 3396) -->
+      <div class="player-card user-card" id="bottomPlayerCard">
+        <div class="player-avatar-box">
+          <img id="whiteAvatarImg" class="player-avatar-img" referrerpolicy="no-referrer" onerror="this.src='/assets/default-user.svg'" src="/assets/default-user.svg" alt="">
+        </div>
+        <div class="player-meta">
+          <div class="player-name-row">
+            <span class="chess-title-tag gm" id="whiteTitleTag">GM</span>
+            <span class="player-name" id="whitePlayerName">MagnusCarlsen</span>
+            <span class="player-elo" id="whiteEloTag">(3396)</span>
+            <span class="player-flag" id="whiteFlagTag">🇳🇴</span>
+            <span class="diamond-badge" id="whiteDiamondTag" title="Kim Cương">💎</span>
+          </div>
+          <div class="captured-row" id="capturedWhitePieces"></div>
+        </div>
+        <div class="player-clock-box">
+          <span class="clock-icon">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+            </svg>
+          </span>
+          <span class="clock-time" id="whiteClockTime">5:00</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Authentic Chess.com Review Panels -->
+    <aside class="right-section">
+      <!-- ==================== VIEW 1: GAME REVIEW OVERVIEW (Screenshots 1 & 2) ==================== -->
+      <div class="review-panel-container" id="reviewOverviewView">
+        <!-- Review Top Header -->
+        <div class="review-top-header">
+          <div class="review-title-group">
+            <span class="review-header-star-badge">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="#ffffff">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+              </svg>
+            </span>
+            <h2>Xem lại ván đấu</h2>
+          </div>
+          <div class="review-header-icons">
+            <button class="icon-btn" id="btnSoundOverview" title="Bật/Tắt âm thanh">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+              </svg>
+            </button>
+            <button class="icon-btn" id="btnFlipBoardOverview" title="Xoay bàn cờ 180° (Phím X)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+              </svg>
+            </button>
+            <button class="icon-btn" id="btnSettingsOverview" title="Cài đặt">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Coach Summary Speech Box (Screenshot 2: "Let's take a closer look at this game.") -->
+        <div class="coach-speech-card">
+          <div class="coach-avatar-box">
+            <img src="/assets/coach-danny.png" class="coach-avatar-img" alt="Coach Danny">
+          </div>
+          <div class="coach-speech-bubble">
+            <p id="coachSummaryText">
+              Let's take a closer look at this game.<br>
+              <span class="sub-commentary">Hãy cùng xem lại chi tiết ván đấu này.</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Advantage Area Curve Chart (Screenshot 2) -->
+        <div class="review-chart-section">
+          <canvas id="reviewOverviewChart" class="overview-chart-canvas"></canvas>
+        </div>
+
+        <!-- Accuracy Comparison Grid (Screenshot 2: 88.4 vs 86.5) -->
+        <div class="accuracy-comparison-card">
+          <div class="acc-row player-row">
+            <span class="acc-row-label">Các kỳ thủ</span>
+            <div class="player-avatar-item">
+              <span class="player-uname" id="overviewWhiteName">MagnusCarlsen</span>
+              <img id="overviewWhiteAvatar" class="mini-avatar" src="https://images.chesscomfiles.com/uploads/v1/user/3889224.121e2094.100x100o.9b93e9eeef44.jpg" alt="White">
+            </div>
+            <div class="player-avatar-item">
+              <span class="player-uname" id="overviewBlackName">Witty_Alien</span>
+              <img id="overviewBlackAvatar" class="mini-avatar green-border" src="https://images.chesscomfiles.com/uploads/v1/user/24250668.edaa550e.100x100o.d6437a25966f.png" alt="Black">
+            </div>
+          </div>
+
+          <div class="acc-row score-row">
+            <span class="acc-row-label">Độ chính xác</span>
+            <div class="acc-pill white-acc-pill" id="overviewWhiteAcc">88.4</div>
+            <div class="acc-pill black-acc-pill" id="overviewBlackAcc">86.5</div>
+          </div>
+        </div>
+
+        <!-- Move Classifications Breakdown Table (Screenshot 1: Tuyệt, Tốt nhất, Tuyệt vời, Sai lầm, Bỏ lỡ, Nước sai lầm ngớ ngẩn) -->
+        <div class="classification-table-wrapper">
+          <table class="classification-table">
+            <tbody id="classificationTableBody">
+              <!-- Dynamically populated from gameData.js -->
+            </tbody>
+          </table>
+          <div class="breakdown-chevron">⌵</div>
+        </div>
+
+        <!-- Xếp hạng ván cờ (Performance Rating / Estimated Elo - Screenshot 1: 3450 vs 2550) -->
+        <div class="performance-rating-section">
+          <div class="perf-row">
+            <span class="perf-label">Xếp hạng ván cờ</span>
+            <div class="perf-pills">
+              <div class="perf-pill white-perf-pill" id="perfWhiteRating">3450</div>
+              <div class="perf-pill black-perf-pill" id="perfBlackRating">2550</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phase Performance (Screenshot 1: Khai cuộc, Các chiến lược, Chiến thuật) -->
+        <div class="phase-table-wrapper">
+          <table class="phase-table">
+            <tbody id="phaseTableBody">
+              <!-- Dynamically populated from gameData.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Big Vibrant Green Button (Screenshot 1 & 2: "Xem lại") -->
+        <button id="btnStartWalkthrough" class="btn-big-green">
+          Xem lại
+        </button>
+      </div>
+
+      <!-- ==================== VIEW 2: STEP-BY-STEP WALKTHROUGH (Screenshot 3 & 4) ==================== -->
+      <div class="review-panel-container hidden" id="reviewWalkthroughView">
+        <!-- Walkthrough Header (Authentic Chess.com: Image 1, 2, 3) -->
+        <div class="walkthrough-header">
+          <button id="btnBackToOverview" class="btn-back-overview" title="Quay lại tổng quan">
+            ←
+          </button>
+          <div class="review-title-group">
+            <span class="review-header-star-badge">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="#ffffff">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+              </svg>
+            </span>
+            <h2>Xem lại ván đấu</h2>
+          </div>
+          <div class="review-header-icons">
+            <button class="icon-btn" id="btnSoundWalkthrough" title="Bật/Tắt giọng bình luận">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+              </svg>
+            </button>
+            <button class="icon-btn" id="btnFlipBoardWalkthrough" title="Xoay bàn cờ 180° (Phím X)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+              </svg>
+            </button>
+            <button class="icon-btn" id="btnSettingsWalkthrough" title="Cài đặt">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Coach Individual Move Commentary Bubble (Screenshot 1, 2, 3) -->
+        <div class="coach-move-speech-card">
+          <div class="coach-avatar-box">
+            <img src="/assets/coach-danny.png" class="coach-avatar-img" alt="Coach Danny">
+          </div>
+          <div class="coach-speech-bubble">
+            <div class="coach-move-header">
+              <span class="move-pill-tag" id="walkthroughMovePill">📖 e4</span>
+              <span class="eval-pill-tag" id="walkthroughEvalPill">+0.22</span>
+            </div>
+            <p id="walkthroughCoachText">
+              là một nước đi như sách giáo khoa<br>
+              <span class="sub-commentary">Controlling the center and opening up the light-squared bishop for development.</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Buttons: Authentic Chess.com 3-Button Layout (Image 1 & 2) -->
+        <div class="walkthrough-action-buttons" id="normalActionButtons">
+          <button id="btnExplainMove" class="btn-explain" title="Giải thích chi tiết sai lầm và cơ hội">
+            💡 Giải thích
+          </button>
+          <button id="btnBestMove" class="btn-best-move" title="Hiện nước cờ tốt nhất của máy tính">
+            ✪ Tốt nhất
+          </button>
+          <button id="btnNextMove" class="btn-next-green" title="Nước tiếp theo">
+            ➔ Tiếp theo
+          </button>
+          <button id="btnReturnMainLine" class="btn-return-green hidden" title="Quay lại ván cờ chính">
+            ▶ Quay lại
+          </button>
+        </div>
+
+        <!-- Explanation Variation Buttons (Image 1: < > Đồng ý!) -->
+        <div class="walkthrough-action-buttons hidden" id="explanationActionButtons">
+          <button id="btnExplainPrev" class="btn-explain-nav" title="Nước trước">
+            ❮
+          </button>
+          <button id="btnExplainNext" class="btn-next-green" title="Nước tiếp theo">
+            ❯
+          </button>
+          <button id="btnExplainDone" class="btn-explain-done" title="Xong giải thích">
+            ✓ Đồng ý!
+          </button>
+        </div>
+
+        <!-- End of Game Full-width Share Button (Screenshot 4) -->
+        <div class="walkthrough-share-container hidden" id="endGameShareContainer">
+          <button id="btnShareGame" class="btn-share-green">
+            🔗 Chia sẻ
+          </button>
+        </div>
+
+        <!-- 2-Column Move Notation List with Icons (Screenshot 3 & 4) -->
+        <div class="walkthrough-move-list-wrapper">
+          <div class="walkthrough-move-list" id="walkthroughMoveList">
+            <!-- Dynamically populated by app.js -->
+          </div>
+        </div>
+
+        <!-- Sub Action Buttons (Screenshot 2, 3, 5: Những điểm nổi bật & 5 phút mới) -->
+        <div class="walkthrough-sub-actions" id="walkthroughSubActions">
+          <button class="btn-sub-action" id="btnHighlights" title="Điểm nổi bật trước đó">
+            ← Những điểm nổi bật
+          </button>
+          <button class="btn-sub-action" id="btnNewGame5Min" title="Chơi lại ván 5 phút mới">
+            5 phút mới
+          </button>
+        </div>
+
+
+
+        <!-- Bottom Playback Controls & Chart (Screenshot 3 & 4) -->
+        <div class="walkthrough-bottom-controls">
+          <canvas id="walkthroughChartCanvas" class="walkthrough-chart-canvas"></canvas>
+          <div class="playback-btn-group">
+            <button id="btnPlayStart" class="btn-playback" title="Nước đầu tiên">|◀</button>
+            <button id="btnPlayPrev" class="btn-playback" title="Nước trước">◀</button>
+            <button id="btnPlayAuto" class="btn-playback btn-play-pause" title="Tự động chạy ván đấu">▶</button>
+            <button id="btnPlayNext" class="btn-playback" title="Nước tiếp">▶</button>
+            <button id="btnPlayEnd" class="btn-playback" title="Nước cuối cùng">▶|</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="/js/app.js?v=4.0"></script>
+</body>
+</html>

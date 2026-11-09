@@ -1,0 +1,33 @@
+{
+  "url": "https://www.chess.com/game/live/184609437048",
+  "pgn": "[Event \"Live Chess\"]\n[Site \"Chess.com\"]\n[Date \"2026.09.30\"]\n[Round \"-\"]\n[White \"MagnusCarlsen\"]\n[Black \"Witty_Alien\"]\n[Result \"0-1\"]\n[Tournament \"https://www.chess.com/tournament/live/chess-club-showdown-31104532\"]\n[CurrentPosition \"7k/p1Q1R1pp/3p4/3q4/8/2P5/b1PK1PPP/1r2R3 w - - 4 22\"]\n[Timezone \"UTC\"]\n[ECO \"C22\"]\n[ECOUrl \"https://www.chess.com/openings/Center-Game-Accepted-Paulsen-Berger-Variation...6.Bd2-O-O-7.O-O-O-Re8\"]\n[UTCDate \"2026.09.30\"]\n[UTCTime \"15:19:47\"]\n[WhiteElo \"3396\"]\n[BlackElo \"2612\"]\n[TimeControl \"300\"]\n[Termination \"Witty_Alien won by resignation\"]\n[StartTime \"15:19:47\"]\n[EndDate \"2026.09.30\"]\n[EndTime \"15:25:04\"]\n[Link \"https://www.chess.com/game/live/184609437048\"]\n\n1. e4 {[%clk 0:04:58]} 1... e5 {[%clk 0:04:58.6]} 2. Nc3 {[%clk 0:04:56.8]} 2... Nf6 {[%clk 0:04:24.1]} 3. d4 {[%clk 0:04:53.6]} 3... exd4 {[%clk 0:04:11.9]} 4. Qxd4 {[%clk 0:04:53.5]} 4... Nc6 {[%clk 0:04:09.1]} 5. Qe3 {[%clk 0:04:52.9]} 5... Bb4 {[%clk 0:04:05.3]} 6. Bd2 {[%clk 0:04:52]} 6... O-O {[%clk 0:04:04.4]} 7. O-O-O {[%clk 0:04:51.6]} 7... Re8 {[%clk 0:04:03.5]} 8. Qf4 {[%clk 0:04:51.3]} 8... Bxc3 {[%clk 0:03:19.9]} 9. Bxc3 {[%clk 0:04:50.3]} 9... Nxe4 {[%clk 0:03:16.6]} 10. Bc4 {[%clk 0:04:49.2]} 10... Nxc3 {[%clk 0:03:05.7]} 11. Bxf7+ {[%clk 0:04:45]} 11... Kh8 {[%clk 0:03:01.2]} 12. Bxe8 {[%clk 0:04:42.5]} 12... Qxe8 {[%clk 0:02:24.4]} 13. bxc3 {[%clk 0:04:41.2]} 13... Ne5 {[%clk 0:01:42.4]} 14. Nf3 {[%clk 0:04:36.8]} 14... Nxf3 {[%clk 0:01:39.2]} 15. Qxf3 {[%clk 0:04:35.7]} 15... d6 {[%clk 0:01:32.9]} 16. Rhe1 {[%clk 0:04:34]} 16... Qg8 {[%clk 0:01:31.8]} 17. Re7 {[%clk 0:04:32.5]} 17... Be6 {[%clk 0:01:23.1]} 18. Qxb7 {[%clk 0:04:26.9]} 18... Rb8 {[%clk 0:01:09.5]} 19. Qxc7 {[%clk 0:04:21.4]} 19... Bxa2 {[%clk 0:01:08.6]} 20. Rde1 {[%clk 0:04:17.9]} 20... Rb1+ {[%clk 0:01:03.4]} 21. Kd2 {[%clk 0:04:16.5]} 21... Qd5+ {[%clk 0:01:03.2]} 0-1\n",
+  "time_control": "300",
+  "end_time": 1790781904,
+  "rated": true,
+  "accuracies": {
+    "white": 88.41,
+    "black": 86.54
+  },
+  "tcn": "mC0Kbs!TlBKBdB5QBu9zcl8!ec98uDzslsTCfACsA1!?1878jsQKgvKvDvZRhe8!e06SvX45XYSide5bcl!J",
+  "uuid": "5f8b47ec-bce2-11f1-a987-563c1101000f",
+  "initial_setup": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+  "fen": "7k/p1Q1R1pp/3p4/3q4/8/2P5/b1PK1PPP/1r2R3 w - - 4 22",
+  "time_class": "blitz",
+  "rules": "chess",
+  "white": {
+    "rating": 3396,
+    "result": "resigned",
+    "@id": "https://api.chess.com/pub/player/magnuscarlsen",
+    "username": "MagnusCarlsen",
+    "uuid": "a2761738-b155-11df-8018-000000000000"
+  },
+  "black": {
+    "rating": 2612,
+    "result": "win",
+    "@id": "https://api.chess.com/pub/player/witty_alien",
+    "username": "Witty_Alien",
+    "uuid": "a0e0c564-621a-11e5-8044-000000000000"
+  },
+  "eco": "https://www.chess.com/openings/Center-Game-Accepted-Paulsen-Berger-Variation...6.Bd2-O-O-7.O-O-O-Re8",
+  "tournament": "https://api.chess.com/pub/tournament/chess-club-showdown-31104532"
+}

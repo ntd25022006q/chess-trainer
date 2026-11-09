@@ -1,0 +1,24 @@
+{
+  "name": "chess-trainer",
+  "version": "1.0.0",
+  "description": "DeepChess Pro - Local Chess Training & Real-time Stockfish Analysis",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "chess",
+    "stockfish",
+    "trainer",
+    "analysis"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "express": "^5.2.1",
+    "stockfish": "^10.0.2",
+    "stockfish.js": "^10.0.2"
+  }
+}
