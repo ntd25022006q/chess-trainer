@@ -18,7 +18,7 @@
   "dependencies": {
     "chess.js": "^1.4.0",
     "express": "^5.2.1",
-    "stockfish": "^10.0.2",
+    "stockfish": "^19.0.1",
     "stockfish.js": "^10.0.2"
   }
 }

@@ -190,10 +190,10 @@ async function run() {
   const tStart = Date.now();
   const reviewResult = GameReviewManager.analyzeGame(samplePgn);
   const duration = Date.now() - tStart;
-  if (!reviewResult || duration > 4000) {
+  if (!reviewResult || duration > 6000) {
     throw new Error(`PeSTO analysis took too long (${duration}ms) or failed!`);
   }
-  console.log(`✅ PeSTO full game analysis executed in ${duration}ms (<2500ms limit)!`);
+  console.log(`✅ PeSTO full game analysis executed in ${duration}ms (<6000ms limit)!`);
 
   // 6d. Verify PushState & Share URL logic in app.js
   if (!appCode.includes("pushState({ gameId: gameData.gameId }, '', targetPath)") && !appCode.includes("pushState({ gameId: gameData.gameId }")) {

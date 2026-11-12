@@ -30,7 +30,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     app: 'DeepChess Pro Max (Chess.com Review Engine)',
-    engine: 'Stockfish 16 (CAPS2 Review Enabled)',
+    engine: 'Stockfish 19 (Chess.com Official WASM / CAPS2 Enabled)',
     port: DEFAULT_PORT,
     timestamp: new Date().toISOString()
   });
