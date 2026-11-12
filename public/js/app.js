@@ -703,30 +703,47 @@ class ChessTrainerApp {
     }
     evalFill.style.height = `${winChance}%`;
 
-    const rawVal = parseFloat(evalText) || 0;
-    const absScore = Math.abs(rawVal).toFixed(1);
-    const isWhiteAdv = (!evalText.startsWith('-') && rawVal !== 0);
-    const isBlackAdv = (evalText.startsWith('-') && rawVal !== 0);
+    let isWhiteAdv = false;
+    let isBlackAdv = false;
+    let displayScore = '0.0';
+
+    if (evalText && evalText.includes('M')) {
+      const isWhiteMate = evalText.startsWith('+');
+      isWhiteAdv = isWhiteMate;
+      isBlackAdv = !isWhiteMate;
+      displayScore = evalText.replace('+', '');
+    } else {
+      const rawVal = parseFloat(evalText) || 0;
+      displayScore = Math.abs(rawVal).toFixed(1);
+      isWhiteAdv = (!evalText.startsWith('-') && rawVal !== 0);
+      isBlackAdv = (evalText.startsWith('-') && rawVal !== 0);
+    }
 
     // Advantage label is placed on the side of the player with the advantage
     // If board is normal (White at bottom): White advantage -> Bottom label; Black advantage -> Top label
     // If board is flipped (White at top): White advantage -> Top label; Black advantage -> Bottom label
     const showTop = isFlipped ? isWhiteAdv : isBlackAdv;
 
-    if (rawVal === 0) {
+    if (displayScore === '0.0') {
       if (evalBottom) { evalBottom.textContent = '0.0'; evalBottom.classList.remove('hidden'); }
       if (evalTop) evalTop.classList.add('hidden');
     } else if (showTop) {
-      if (evalTop) { evalTop.textContent = absScore; evalTop.classList.remove('hidden'); }
+      if (evalTop) { evalTop.textContent = displayScore; evalTop.classList.remove('hidden'); }
       if (evalBottom) evalBottom.classList.add('hidden');
     } else {
-      if (evalBottom) { evalBottom.textContent = absScore; evalBottom.classList.remove('hidden'); }
+      if (evalBottom) { evalBottom.textContent = displayScore; evalBottom.classList.remove('hidden'); }
       if (evalTop) evalTop.classList.add('hidden');
     }
   }
 
   loadGame(gameData) {
     this.currentGame = gameData;
+
+    // Keep top URL search input synchronized with current game
+    const topUrlInput = document.getElementById('topGameUrlInput');
+    if (topUrlInput && gameData.gameId) {
+      topUrlInput.value = `https://www.chess.com/game/live/${gameData.gameId}`;
+    }
 
     // Determine board perspective from URL (?username=...)
     let targetUser = '';
@@ -993,8 +1010,18 @@ class ChessTrainerApp {
     this.isShowingBestMove = false;
     this.exitExplanationMode(false);
 
-    // 1. Update Board Position
-    this.board.setPosition(this.chess);
+    // 1. Play Sound
+    const last = (index > 0 && this.gameMoves) ? this.gameMoves[index - 1] : null;
+    if (last) {
+      if (last.captured) chessAudio.playCapture();
+      else chessAudio.playMove();
+    }
+
+    // 2. Prepare single atomic board render state (Zero layout shift & zero flicker)
+    let badgeObj = null;
+    let highlightsObj = {};
+    let specialMarkersObj = null;
+    let arrowsToDisplay = [];
 
     const whiteClockEl = document.getElementById('whiteClockTime');
     const blackClockEl = document.getElementById('blackClockTime');
@@ -1006,22 +1033,21 @@ class ChessTrainerApp {
     const shareContainer = document.getElementById('endGameShareContainer');
     const subActions = document.getElementById('endGameSubActions');
 
-    // 2. Play Sound & Highlight Last Move
-    const last = (index > 0 && this.gameMoves) ? this.gameMoves[index - 1] : null;
-    if (last) {
-      if (last.captured) chessAudio.playCapture();
-      else chessAudio.playMove();
-      this.board.setLastMove(last.from, last.to);
-    } else {
-      this.board.setLastMove(null, null);
-    }
-
     // 3. Highlight Last Move & Badges
     if (index > 0) {
       const rev = this.moveReviews[index - 1];
       if (rev) {
-        if (last) {
-          this.board.setSquareBadge(last.to, rev.badge, rev.badgeClass);
+        if (last && rev.badge) {
+          badgeObj = { sq: last.to, badge: rev.badge, badgeClass: rev.badgeClass };
+        }
+        if (rev.squareHighlights) {
+          highlightsObj = rev.squareHighlights;
+        }
+        if (rev.isFork) {
+          specialMarkersObj = {
+            resignedSquare: rev.resignedSquare,
+            winnerKingSquare: rev.winnerKingSquare
+          };
         }
 
         // Update Clocks (Decrements / synchronizes per move!)
@@ -1093,7 +1119,7 @@ class ChessTrainerApp {
         this.updateEvalBarDisplay(rev.eval, rev.winChance);
 
         // Overlay arrows (Analysis arrows for ALL moves across entire game)
-        let arrowsToDisplay = rev.arrows;
+        arrowsToDisplay = rev.arrows;
         if (!arrowsToDisplay || arrowsToDisplay.length === 0) {
           arrowsToDisplay = [];
           if (['badge-blunder', 'badge-mistake', 'badge-miss', 'badge-inaccuracy'].includes(rev.badgeClass)) {
@@ -1114,45 +1140,8 @@ class ChessTrainerApp {
             }
           }
         }
-
-        if (arrowsToDisplay && arrowsToDisplay.length > 0) {
-          this.board.setArrows(arrowsToDisplay);
-          this.board.setSpecialMarkers(null);
-        } else if (rev.isFork) {
-          this.board.setSpecialMarkers({
-            resignedSquare: rev.resignedSquare,
-            winnerKingSquare: rev.winnerKingSquare
-          });
-          this.board.setArrows([
-            { from: rev.forkFrom, to: rev.forkTo1, color: '#f59e0b' },
-            { from: rev.forkFrom, to: rev.forkTo2, color: '#f59e0b' }
-          ]);
-        } else {
-          this.board.setSpecialMarkers(null);
-          this.board.clearArrows();
-      this.board.setSquareHighlights({});
-        }
-
-        // Target / Blunder highlights matching Screenshot 4
-        if (rev.squareHighlights) {
-          this.board.setSquareHighlights(rev.squareHighlights);
-        } else if (index === 39) {
-          this.board.setSquareHighlights({
-            'b1': 'rgba(245, 158, 11, 0.7)',
-            'd1': 'rgba(239, 68, 68, 0.4)',
-            'e1': 'rgba(239, 68, 68, 0.6)'
-          });
-        } else {
-          this.board.setSquareHighlights({});
-        }
       }
     } else {
-      this.board.setLastMove(null, null);
-      this.board.setSquareBadge(null, null);
-      this.board.setSpecialMarkers(null);
-      this.board.clearArrows();
-      this.board.setSquareHighlights({});
-
       const bestRow = document.getElementById('bestMoveSuggestionRow');
       if (bestRow) bestRow.classList.add('hidden');
 
@@ -1169,6 +1158,29 @@ class ChessTrainerApp {
       if (coachText) coachText.textContent = 'Nhấn "Tiếp theo" để bắt đầu xem lại từng nước đi!';
 
       this.updateEvalBarDisplay('0.0', 50);
+    }
+
+    // Single atomic render of the board state! (ZERO reflow jitter, no multiple renders!)
+    this.board.updateMoveState({
+      chess: this.chess,
+      lastMove: last,
+      squareBadge: badgeObj,
+      squareHighlights: highlightsObj,
+      specialMarkers: specialMarkersObj
+    });
+
+    if (arrowsToDisplay && arrowsToDisplay.length > 0) {
+      this.board.setArrows(arrowsToDisplay);
+    } else if (specialMarkersObj) {
+      const rev = this.moveReviews[index - 1];
+      if (rev && rev.isFork) {
+        this.board.setArrows([
+          { from: rev.forkFrom, to: rev.forkTo1, color: '#f59e0b' },
+          { from: rev.forkFrom, to: rev.forkTo2, color: '#f59e0b' }
+        ]);
+      }
+    } else {
+      this.board.clearArrows();
     }
 
     // Dynamic Captured pieces update

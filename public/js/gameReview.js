@@ -7,15 +7,27 @@ const PIECE_VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 // Standard Opening Book for Instant Recognition
 const OPENING_BOOK = {
   'e4': { vi: 'Là một nước đi như sách giáo khoa.', en: 'Controlling the center and opening lines for rapid development.' },
-  'c6': { vi: 'Phòng thủ Caro-Kann vững chắc của Đen.', en: 'The solid Caro-Kann Defense preparing to contest d5.' },
-  'e5': { vi: 'Chiếm lĩnh trung tâm đối xứng cân bằng.', en: 'Occupies the center and mirrors White.' },
   'd4': { vi: 'Chiếm lĩnh hoàn toàn trung tâm với cặp tốt mạnh.', en: 'Controls the full center with the pawn duo.' },
   'd5': { vi: 'Phản công d5 trực diện vào trung tâm.', en: 'Strikes back directly at White\'s center.' },
+  'e5': { vi: 'Chiếm lĩnh trung tâm đối xứng cân bằng.', en: 'Occupies the center and mirrors White.' },
+  'c4': { vi: 'Khai cuộc Anh kiểm soát ô d5 từ cánh.', en: 'English Opening controlling d5.' },
+  'c5': { vi: 'Phòng thủ Sicilian sắc bén phản công trung tâm.', en: 'Sicilian Defense fighting for d4.' },
+  'c6': { vi: 'Phòng thủ Caro-Kann vững chắc của Đen.', en: 'The solid Caro-Kann Defense preparing to contest d5.' },
+  'e6': { vi: 'Phòng thủ Pháp chuẩn bị đẩy d5.', en: 'French Defense preparing d5.' },
+  'Nf3': { vi: 'Phát triển mã f3 kiểm soát trung tâm.', en: 'Develops knight controlling central squares.' },
   'Nc3': { vi: 'Phát triển mã c3 bảo vệ và gây áp lực trung tâm.', en: 'Develops the knight to control central squares.' },
   'Nd2': { vi: 'Phát triển mã d2 bảo vệ tốt e4 linh hoạt.', en: 'Classical development defending e4 without blocking the c-pawn.' },
   'Nf6': { vi: 'Phát triển mã cánh vua gây sức ép lên e4.', en: 'Active knight development pressuring e4.' },
+  'Nc6': { vi: 'Phát triển mã c6 kiểm soát trung tâm.', en: 'Knight develops to natural central square.' },
+  'exd5': { vi: 'Trắng ăn tốt d5 theo sách khai cuộc Scandinavian.', en: 'Exchanges on d5 according to Scandinavian theory.' },
+  'Qxd5': { vi: 'Đen bắt lại tốt bằng Hậu theo biến chính Scandinavian.', en: 'Queen recaptures on d5 in the main line Scandinavian.' },
   'dxe4': { vi: 'Đổi tốt mở đường cho các quân nhẹ phát triển.', en: 'Trades on e4 to liberate bishop diagonal.' },
   'Nxe4': { vi: 'Trắng lấy mã chiếm lĩnh vị trí trung tâm cơ động.', en: 'Recaptures on e4 into a powerful central post.' },
+  'Bc4': { vi: 'Phát triển tượng kiểm soát đường chéo mạnh.', en: 'Develops bishop to an active diagonal.' },
+  'Bb5': { vi: 'Tượng b5 ghim hoặc gây áp lực mã.', en: 'Pins or pressures knight.' },
+  'Be2': { vi: 'Phát triển tượng e2 chuẩn bị nhập thành.', en: 'Quiet development preparing castling.' },
+  'g3': { vi: 'Chuẩn bị mở đường xếp tượng cánh vua.', en: 'Prepares kingside fianchetto.' },
+  'Bg2': { vi: 'Tượng fianchetto kiểm soát đường chéo lớn.', en: 'Fianchettoed bishop on long diagonal.' },
   'O-O': { vi: 'Nhập thành an toàn đưa Vua vào vị trí bảo vệ.', en: 'Castles kingside to tuck the King away.' },
   'O-O-O': { vi: 'Nhập thành xa chuẩn bị bão tốt cánh vua.', en: 'Queenside castling initiating aggressive opposite-side attacks.' },
   'Re8': { vi: 'Xe e8 chiếm cột mở trung tâm.', en: 'Rook to e8 takes open file pressure.' }
@@ -457,14 +469,15 @@ export class GameReviewManager {
       return { type: 'great', label: 'Tuyệt', icon: '!', colorClass: 'badge-great', color: '#38bdf8' };
     }
 
-    // 3. Blunder (??): Over 20% drop (hanging piece or throwing game)
-    if (winDrop >= 20.0) {
-      return { type: 'blunder', label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', color: '#dc2626' };
+    // 3. Miss (✕): Missed tactical win or missed punishing an opponent's blunder (prevWin >= 55%)
+    // Must be evaluated BEFORE general Blunder, matching Chess.com hierarchy!
+    if (winDrop >= 15.0 && prevWin >= 55) {
+      return { type: 'miss', label: 'Bỏ lỡ', icon: '✕', colorClass: 'badge-miss', color: '#ef4444' };
     }
 
-    // 4. Miss (✕): 15% - 20% drop (missed tactical win / major advantage)
-    if (winDrop >= 15.0 && prevWin >= 60) {
-      return { type: 'miss', label: 'Bỏ lỡ', icon: '✕', colorClass: 'badge-miss', color: '#ef4444' };
+    // 4. Blunder (??): Over 20% drop (hanging piece or throwing game)
+    if (winDrop >= 20.0) {
+      return { type: 'blunder', label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', color: '#dc2626' };
     }
 
     // 5. Mistake (?): 10.0% - 20.0% drop
@@ -477,17 +490,17 @@ export class GameReviewManager {
       return { type: 'inaccuracy', label: 'Không chính xác', icon: '?!', colorClass: 'badge-inaccuracy', color: '#eab308' };
     }
 
-    // 7. Best (★): Top move with minimal drop (< 1.0%)
-    if (winDrop <= 1.0) {
+    // 7. Best (★): Top move with minimal drop (< 0.8%)
+    if (winDrop <= 0.8) {
       return { type: 'best', label: 'Tốt nhất', icon: '★', colorClass: 'badge-best', color: '#81b64c' };
     }
 
-    // 8. Excellent / Good (👍): Small drop (1.0% - 3.5%) — Chess.com uses wider range
-    if (winDrop <= 3.5) {
+    // 8. Excellent / Good (👍): Small drop (0.8% - 2.5%) — Chess.com "Tuyệt vời"
+    if (winDrop <= 2.5) {
       return { type: 'good', label: 'Tuyệt vời', icon: '👍', colorClass: 'badge-good', color: '#81b64c' };
     }
 
-    // 9. Solid / OK (✓): Small drop (3.5% - 5.0%)
+    // 9. Solid / OK (✓): Minor drop (2.5% - 5.0%) — Chess.com "Tốt"
     return { type: 'solid', label: 'Tốt', icon: '✓', colorClass: 'badge-solid', color: '#81b64c' };
   }
 
@@ -649,16 +662,18 @@ export class GameReviewManager {
       // Sacrifice detection
       const isSacrifice = isBook ? false : this.isTrueSacrifice(fens[idx], m);
 
-      // Great move detection: player played best move AND winDrop very small AND it was clearly best
-      // Chess.com "Great" = found the only good continuation when alternatives fail badly
-      // We approximate: player's move matches Stockfish best AND winDrop <= 0 (they played it perfectly)
+      // Great move detection: player played best move AND 2nd best is significantly worse
+      // Chess.com standard: drop between best move and 2nd best move >= 12% in win chance
       let isGreat = false;
       if (!isBook && !isSacrifice && bestMoveCandidate) {
         const playerMatchesBest = (m.from === bestMoveCandidate.from && m.to === bestMoveCandidate.to);
-        // For Great, we can't easily get 2nd best without MultiPV, 
-        // but we can approximate: score drop <= 0.5% and position is "critical" (contested 35-65%)
-        if (playerMatchesBest && winDrop <= 0.5 && prevWin >= 35 && prevWin <= 65) {
-          isGreat = true;
+        if (playerMatchesBest && winDrop <= 0.5 && evalBefore.secondWinChance !== null) {
+          const topWin = (side === 'w') ? evalBefore.winChance : (100 - evalBefore.winChance);
+          const secondWin = (side === 'w') ? evalBefore.secondWinChance : (100 - evalBefore.secondWinChance);
+          const secondDrop = Math.max(0, topWin - secondWin);
+          if (secondDrop >= 12.0) {
+            isGreat = true;
+          }
         }
       }
 

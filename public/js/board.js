@@ -231,6 +231,29 @@ export class ChessBoardUI {
     this.renderBoard();
   }
 
+  // Atomic batch update for move navigation: updates pieces, lastMove, badge, markers, highlights with a SINGLE renderBoard()
+  updateMoveState({ chess = null, lastMove = null, squareBadge = null, squareHighlights = null, specialMarkers = null } = {}) {
+    if (chess && typeof chess.board === 'function') {
+      this.pieces = {};
+      const boardArr = chess.board();
+      const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const p = boardArr[r][c];
+          if (p) {
+            const sq = `${files[c]}${8 - r}`;
+            this.pieces[sq] = { type: p.type, color: p.color };
+          }
+        }
+      }
+    }
+    this.lastMove = lastMove ? { from: lastMove.from, to: lastMove.to } : null;
+    this.squareBadge = squareBadge ? { sq: squareBadge.sq, badge: squareBadge.badge, badgeClass: squareBadge.badgeClass || '' } : null;
+    this.squareHighlights = squareHighlights || {};
+    this.specialMarkers = specialMarkers || null;
+    this.renderBoard();
+  }
+
   setArrows(arrowList) {
     this.arrows = arrowList || [];
     this.renderArrows();

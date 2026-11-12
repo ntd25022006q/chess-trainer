@@ -264,7 +264,7 @@ export class StockfishEngine {
       // Block handleMessage from interfering during review
       this.isReviewMode = true;
 
-      let latestEval = null;
+      const lines = {};
       let resolved = false;
 
       const tempHandler = (e) => {
@@ -277,11 +277,24 @@ export class StockfishEngine {
           this.worker.removeEventListener('message', tempHandler);
           this.isReviewMode = false; // Unblock handleMessage
           const bm = line.split(' ')[1] || null;
-          resolve(latestEval || { scoreWhite: 0, winChance: 50, bestMove: bm, pv: '', isMate: false });
+          const l1 = lines[1] || {};
+          const l2 = lines[2] || {};
+          resolve({
+            scoreWhite: l1.scoreWhite ?? 0,
+            winChance: l1.winChance ?? 50,
+            bestMove: l1.bestMove ?? bm,
+            pv: l1.pv ?? '',
+            isMate: l1.isMate ?? false,
+            secondBestMove: l2.bestMove ?? null,
+            secondWinChance: l2.winChance ?? null,
+            secondScoreWhite: l2.scoreWhite ?? null
+          });
         } else if (line.startsWith('info') && line.includes('score')) {
           const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
           const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
           const pvMatch = line.match(/\bpv\s+(.+)$/);
+          const mpvMatch = line.match(/\bmultipv\s+(\d+)/);
+          const mpvIndex = mpvMatch ? parseInt(mpvMatch[1], 10) : 1;
 
           let score = 0;
           let isMate = false;
@@ -301,7 +314,7 @@ export class StockfishEngine {
           }
 
           const pv = pvMatch ? pvMatch[1].trim() : '';
-          latestEval = {
+          lines[mpvIndex] = {
             scoreWhite,
             isMate,
             mateInWhite,
@@ -313,8 +326,8 @@ export class StockfishEngine {
       };
 
       this.worker.addEventListener('message', tempHandler);
-      // Set MultiPV=1 for review analysis (we only need best move)
-      this.worker.postMessage('setoption name MultiPV value 1');
+      // MultiPV=2 to evaluate both best and 2nd best move (for authentic Chess.com Great move detection)
+      this.worker.postMessage('setoption name MultiPV value 2');
       this.worker.postMessage(`position fen ${fen}`);
       this.worker.postMessage(`go depth ${depth}`);
 
@@ -324,7 +337,18 @@ export class StockfishEngine {
           resolved = true;
           this.worker.removeEventListener('message', tempHandler);
           this.isReviewMode = false;
-          resolve(latestEval || { scoreWhite: 0, winChance: 50, bestMove: null, pv: '', isMate: false });
+          const l1 = lines[1] || {};
+          const l2 = lines[2] || {};
+          resolve({
+            scoreWhite: l1.scoreWhite ?? 0,
+            winChance: l1.winChance ?? 50,
+            bestMove: l1.bestMove ?? null,
+            pv: l1.pv ?? '',
+            isMate: l1.isMate ?? false,
+            secondBestMove: l2.bestMove ?? null,
+            secondWinChance: l2.winChance ?? null,
+            secondScoreWhite: l2.scoreWhite ?? null
+          });
         }
       }, 30000);
     });
