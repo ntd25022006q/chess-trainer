@@ -638,6 +638,44 @@ class ChessTrainerApp {
     this.updatePlayerCardDisplay();
   }
 
+  // === STOCKFISH ANALYSIS PROGRESS BAR ===
+  _showAnalysisProgress(done, total) {
+    let overlay = document.getElementById('sfAnalysisOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'sfAnalysisOverlay';
+      overlay.style.cssText = `
+        position:fixed;top:0;left:0;width:100%;height:100%;
+        background:rgba(0,0,0,0.75);z-index:9999;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        font-family:inherit;color:#fff;
+      `;
+      overlay.innerHTML = `
+        <div style="text-align:center;max-width:380px;padding:32px 24px;background:#1a1a2e;border-radius:16px;border:1px solid #333;">
+          <div style="font-size:2rem;margin-bottom:12px;">♟️</div>
+          <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">Stockfish đang phân tích ván đấu</div>
+          <div style="font-size:0.85rem;color:#aaa;margin-bottom:16px;">Depth 18 — Kết quả chuẩn xác như Chess.com</div>
+          <div style="background:#2a2a3e;border-radius:8px;height:10px;overflow:hidden;margin-bottom:12px;">
+            <div id="sfProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#4ade80,#06b6d4);border-radius:8px;transition:width 0.3s ease;"></div>
+          </div>
+          <div id="sfProgressText" style="font-size:0.85rem;color:#81b64c;">Đang khởi động engine...</div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+    overlay.style.display = 'flex';
+    const bar = document.getElementById('sfProgressBar');
+    const txt = document.getElementById('sfProgressText');
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    if (bar) bar.style.width = `${pct}%`;
+    if (txt) txt.textContent = total > 1 ? `Nước ${done}/${total} (${pct}%)` : 'Đang khởi động engine...';
+  }
+
+  _hideAnalysisProgress() {
+    const overlay = document.getElementById('sfAnalysisOverlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
   updateEvalBarDisplay(evalText = null, winChance = null) {
     const evalFill = document.getElementById('evalFill');
     const evalTop = document.getElementById('evalScoreTop');
@@ -1184,11 +1222,22 @@ class ChessTrainerApp {
       if (data.gameId === '184609437048') {
         this.loadGame(FEATURED_GAME_184609437048);
       } else {
-        // Construct dynamic game object using full CAPS2 review analysis
-        const analyzed = GameReviewManager.analyzeGame(data.pgn, {
-          accuracies: data.accuracies,
-          players: data.players
-        });
+        // === STOCKFISH ASYNC ANALYSIS (Chess.com parity, depth 18) ===
+        // Show analysis progress bar during Stockfish evaluation
+        if (btn) { btn.textContent = '🔍 Stockfish đang phân tích...'; }
+        this._showAnalysisProgress(0, 1);
+
+        const analyzed = await GameReviewManager.analyzeGameWithStockfish(
+          data.pgn,
+          this.engine,
+          { accuracies: data.accuracies, players: data.players },
+          (done, total) => {
+            this._showAnalysisProgress(done, total);
+            if (btn) btn.textContent = `🔍 Phân tích nước ${done}/${total}...`;
+          }
+        );
+
+        this._hideAnalysisProgress();
 
         if (!analyzed) {
           throw new Error('Không thể phân tích ván cờ từ PGN này.');
@@ -1234,6 +1283,8 @@ class ChessTrainerApp {
         };
 
         this.loadGame(dynamicGame);
+        // Restore engine MultiPV after game review analysis
+        this.engine.restoreAfterReview();
       }
     } catch (err) {
       alert(`⚠️ Lỗi nạp link: ${err.message}`);

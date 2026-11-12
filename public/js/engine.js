@@ -4,6 +4,7 @@ export class StockfishEngine {
     this.worker = null;
     this.isReady = false;
     this.isAnalyzing = false;
+    this.isReviewMode = false; // True during async game review to block handleMessage
     this.currentFen = null;
     this.activeTurn = 'w';
     this.multiPvCount = 3; // Default 3 analysis lines
@@ -44,6 +45,16 @@ export class StockfishEngine {
     this.sendCommand(`setoption name MultiPV value ${this.multiPvCount}`);
   }
 
+  // Restore engine state after async game review (reset MultiPV, clear hash)
+  restoreAfterReview() {
+    this.isAnalyzing = false;
+    this.isReviewMode = false;
+    this.pvLines = {};
+    this.sendCommand('ucinewgame');
+    this.setMultiPv(this.multiPvCount); // restore to configured MultiPV (default 3)
+    this.sendCommand('isready');
+  }
+
   handleMessage(line) {
     if (typeof line !== 'string') return;
 
@@ -65,13 +76,14 @@ export class StockfishEngine {
 
     // Parse info output: e.g. "info depth 14 seldepth 20 multipv 1 score cp 35 ... pv e2e4 e7e5"
     if (line.startsWith('info') && line.includes('score')) {
-      if (!this.isAnalyzing) return;
+      if (!this.isAnalyzing || this.isReviewMode) return; // Skip during review mode
       this.parseInfo(line);
       return;
     }
 
     // Parse bestmove: e.g. "bestmove e2e4 ponder e7e5"
     if (line.startsWith('bestmove')) {
+      if (this.isReviewMode) return; // Review mode handles bestmove via tempHandler
       this.isAnalyzing = false;
       const parts = line.split(' ');
       const bestMove = parts[1];
@@ -237,20 +249,35 @@ export class StockfishEngine {
     this.sendCommand(`go depth ${depth} movetime ${moveTime}`);
   }
 
-  // Evaluate a single position synchronously via Promise (used for Game Review)
-  evaluatePositionAsync(fen, depth = 10) {
+  // Evaluate a single position via Promise — used for async Game Review (Stockfish depth analysis)
+  // Properly stops any ongoing analysis before starting a new one.
+  evaluatePositionAsync(fen, depth = 16) {
     return new Promise((resolve) => {
       const parts = fen.split(' ');
       const turn = parts[1] || 'w';
+
+      // Stop any current analysis to avoid message collision
+      if (this.isAnalyzing) {
+        this.worker.postMessage('stop');
+        this.isAnalyzing = false;
+      }
+      // Block handleMessage from interfering during review
+      this.isReviewMode = true;
+
+      let latestEval = null;
+      let resolved = false;
 
       const tempHandler = (e) => {
         const line = e.data;
         if (typeof line !== 'string') return;
 
         if (line.startsWith('bestmove')) {
+          if (resolved) return;
+          resolved = true;
           this.worker.removeEventListener('message', tempHandler);
-          // Return last recorded eval
-          resolve(latestEval || { scoreWhite: 0, winChance: 50, bestMove: line.split(' ')[1] });
+          this.isReviewMode = false; // Unblock handleMessage
+          const bm = line.split(' ')[1] || null;
+          resolve(latestEval || { scoreWhite: 0, winChance: 50, bestMove: bm, pv: '', isMate: false });
         } else if (line.startsWith('info') && line.includes('score')) {
           const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
           const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
@@ -263,8 +290,8 @@ export class StockfishEngine {
           if (cpMatch) score = parseInt(cpMatch[1], 10);
           else if (mateMatch) { isMate = true; mateIn = parseInt(mateMatch[1], 10); }
 
-          let scoreWhite = (turn === 'b') ? -score : score;
-          let mateInWhite = (turn === 'b') ? -mateIn : mateIn;
+          const scoreWhite = (turn === 'b') ? -score : score;
+          const mateInWhite = (turn === 'b') ? -mateIn : mateIn;
 
           let winChance = 50;
           if (isMate) winChance = mateInWhite > 0 ? 100 : 0;
@@ -285,10 +312,11 @@ export class StockfishEngine {
         }
       };
 
-      let latestEval = null;
       this.worker.addEventListener('message', tempHandler);
-      this.sendCommand(`position fen ${fen}`);
-      this.sendCommand(`go depth ${depth}`);
+      // Set MultiPV=1 for review analysis (we only need best move)
+      this.worker.postMessage('setoption name MultiPV value 1');
+      this.worker.postMessage(`position fen ${fen}`);
+      this.worker.postMessage(`go depth ${depth}`);
     });
   }
 
