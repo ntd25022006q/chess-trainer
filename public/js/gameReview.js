@@ -482,12 +482,12 @@ export class GameReviewManager {
       return { type: 'best', label: 'Tốt nhất', icon: '★', colorClass: 'badge-best', color: '#81b64c' };
     }
 
-    // 8. Excellent / Good (👍): Small drop (1.0% - 2.5%)
-    if (winDrop <= 2.5) {
+    // 8. Excellent / Good (👍): Small drop (1.0% - 3.5%) — Chess.com uses wider range
+    if (winDrop <= 3.5) {
       return { type: 'good', label: 'Tuyệt vời', icon: '👍', colorClass: 'badge-good', color: '#81b64c' };
     }
 
-    // 9. Solid / OK (✓): Small drop (2.5% - 5.0%)
+    // 9. Solid / OK (✓): Small drop (3.5% - 5.0%)
     return { type: 'solid', label: 'Tốt', icon: '✓', colorClass: 'badge-solid', color: '#81b64c' };
   }
 
