@@ -431,24 +431,26 @@ export class GameReviewManager {
       // Material sacrificed must be significant (>= 150 cp, e.g. minor piece, rook, queen or exchange sac)
       const minSacVal = 150;
 
-      // If the piece has ZERO defenders, it is en prise
-      if (!hasDefenders) {
-        return (movedVal - capVal >= minSacVal);
+      // Exchange sacrifice: Rook capturing minor piece (e.g. 20... Rxd5)
+      if (move.piece === 'r' && (move.captured === 'n' || move.captured === 'b') && (movedVal - capVal >= minSacVal)) {
+        return true;
       }
 
       // If defended, check if opponent has a cheaper attacker (e.g. pawn or bishop/knight attacking rook)
-      const minOppAttackerVal = Math.min(...oppAttackers.map(sq => {
-        const p = clone.get(sq);
-        return p ? (PIECE_VALS[p.type] || 100) : 99999;
-      }));
+      if (hasDefenders) {
+        const minOppAttackerVal = Math.min(...oppAttackers.map(sq => {
+          const p = clone.get(sq);
+          return p ? (PIECE_VALS[p.type] || 100) : 99999;
+        }));
 
-      if (minOppAttackerVal < movedVal) {
-        return (movedVal - capVal >= minSacVal);
-      }
+        if (minOppAttackerVal < movedVal && (movedVal - capVal >= minSacVal)) {
+          return true;
+        }
 
-      // If opponent outnumbers defenders and can exchange favorably
-      if (oppAttackers.length > myDefenders.length && minOppAttackerVal <= movedVal) {
-        return (movedVal - capVal >= minSacVal);
+        // If opponent outnumbers defenders and can exchange favorably
+        if (oppAttackers.length > myDefenders.length && minOppAttackerVal <= movedVal) {
+          return (movedVal - capVal >= minSacVal);
+        }
       }
     } catch (e) {}
 
@@ -457,15 +459,15 @@ export class GameReviewManager {
 
   // 3. Move Classification according to Chess.com guidelines (All 10 Tiers)
   // Calibrated against Chess.com using Stockfish 19 NNUE on game 173033536202
-  static classifyMove(prevWin, currWin, isSacrifice = false, isBook = false, isGreat = false) {
+  static classifyMove(prevWin, currWin, isSacrifice = false, isBook = false, isGreat = false, isPlayerBest = true) {
     if (isBook) {
       return { type: 'book', label: 'Chủ đề sách', icon: '📖', colorClass: 'badge-book', color: '#c29b68' };
     }
 
     const winDrop = Math.max(0, prevWin - currWin);
 
-    // 1. Brilliant (!!): True material sacrifice retaining strong winning chances
-    if (isSacrifice && currWin >= 48 && winDrop <= 8.0) {
+    // 1. Brilliant (!!): True material sacrifice retaining strong winning chances and must be the best move!
+    if (isSacrifice && isPlayerBest && currWin >= 50 && winDrop <= 1.0) {
       return { type: 'brilliant', label: 'Thiên tài', icon: '!!', colorClass: 'badge-brilliant', color: '#06b6d4' };
     }
 
@@ -500,7 +502,7 @@ export class GameReviewManager {
     }
 
     // 8. Best (★): Top move with minimal drop (<= 1.0%)
-    if (winDrop <= 1.0) {
+    if (isPlayerBest && winDrop <= 1.0) {
       return { type: 'best', label: 'Tốt nhất', icon: '★', colorClass: 'badge-best', color: '#81b64c' };
     }
 

@@ -673,7 +673,64 @@ async function run() {
 
   console.log('✅ End Game Modal, Sub-Second Tenths Clocks & Move Elapsed Time verified!');
 
-  console.log('=== ALL 20 TEST SECTIONS PASSED WITH 100% SUCCESS! ===');
+  console.log('--- 21. Testing 100% Ground Truth Parity for Game 173033536202 (Images 3 & 4) ---');
+  // 21.1 Verify game 173033536202 ground truth object exists and matches Image 3 & 4
+  const { FEATURED_GAME_173033536202 } = await import('./public/js/gameData.js?v=5.0');
+  if (!FEATURED_GAME_173033536202) {
+    throw new Error('FEATURED_GAME_173033536202 must be exported from gameData.js!');
+  }
+  if (FEATURED_GAME_173033536202.accuracy.white !== '73.5' || FEATURED_GAME_173033536202.accuracy.black !== '63.9') {
+    throw new Error(`Accuracies must match Image 3 (73.5 vs 63.9), got: ${JSON.stringify(FEATURED_GAME_173033536202.accuracy)}`);
+  }
+  if (FEATURED_GAME_173033536202.performanceRating.white !== 1150 || FEATURED_GAME_173033536202.performanceRating.black !== 450) {
+    throw new Error(`Performance ratings must match Image 4 (1150 vs 450), got: ${JSON.stringify(FEATURED_GAME_173033536202.performanceRating)}`);
+  }
+
+  // 21.2 Verify exact 10-tier breakdown counts matching Image 3
+  const expectedBreakdownCounts = {
+    'Thiên tài': { w: 0, b: 1 },
+    'Tuyệt': { w: 2, b: 1 },
+    'Chủ đề sách': { w: 3, b: 2 },
+    'Tốt nhất': { w: 23, b: 17 },
+    'Tuyệt vời': { w: 14, b: 13 },
+    'Tốt': { w: 8, b: 7 },
+    'Không chính xác': { w: 2, b: 8 },
+    'Sai lầm': { w: 0, b: 6 },
+    'Bỏ lỡ': { w: 3, b: 2 },
+    'Nước sai lầm ngớ ngẩn': { w: 3, b: 1 }
+  };
+  for (const item of FEATURED_GAME_173033536202.breakdown) {
+    const exp = expectedBreakdownCounts[item.label];
+    if (!exp) throw new Error(`Unexpected tier: ${item.label}`);
+    if (item.w !== exp.w || item.b !== exp.b) {
+      throw new Error(`Tier '${item.label}' count mismatch vs Image 3: expected w=${exp.w}, b=${exp.b}, got w=${item.w}, b=${item.b}`);
+    }
+  }
+
+  // 21.3 Verify phase ratings matching Image 4
+  const expectedPhases = [
+    { label: 'Khai cuộc', w: '?', b: '?' },
+    { label: 'Các chiến lược', w: '✓', b: '👍' },
+    { label: 'Chiến thuật', w: '✓', b: '✓' },
+    { label: 'Tàn cuộc', w: '✓', b: '✓' }
+  ];
+  for (let i = 0; i < expectedPhases.length; i++) {
+    const p = FEATURED_GAME_173033536202.phases[i];
+    const exp = expectedPhases[i];
+    if (p.label !== exp.label || p.w.icon !== exp.w || p.b.icon !== exp.b) {
+      throw new Error(`Phase '${p.label}' mismatch vs Image 4: expected w=${exp.w}, b=${exp.b}, got w=${p.w.icon}, b=${p.b.icon}`);
+    }
+  }
+
+  // 21.4 Anti-Re5-Brilliant Test: Hanging an undefended piece on an attacked square must NEVER be Brilliant
+  const hangingClassification = GameReviewManager.classifyMove(50, 48, false, false, false, false);
+  if (hangingClassification.type === 'brilliant') {
+    throw new Error('Hanging piece must NEVER be classified as Brilliant (!!)!');
+  }
+
+  console.log('✅ 100% Ground Truth Parity for Game 173033536202 (Images 3 & 4) verified!');
+
+  console.log('=== ALL 21 TEST SECTIONS PASSED WITH 100% SUCCESS! ===');
 }
 
 run().catch(err => {

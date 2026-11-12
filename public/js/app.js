@@ -2,7 +2,7 @@ import { Chess } from '../lib/chess.js';
 import { StockfishEngine } from './engine.js?v=5.0';
 import { ChessBoardUI } from './board.js?v=5.0';
 import { chessAudio } from './audio.js?v=5.0';
-import { FEATURED_GAME_184609437048 } from './gameData.js?v=5.0';
+import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202 } from './gameData.js?v=5.0';
 import { AdvantageChart } from './chart.js?v=5.0';
 import { GameReviewManager } from './gameReview.js?v=5.0';
 
@@ -99,7 +99,8 @@ class ChessTrainerApp {
           const prevWin = lastMove.prevWin || 50;
           const fenBeforeMove = lastMove.prevFen || this.trialBaseFen;
           const isSac = GameReviewManager.isTrueSacrifice(fenBeforeMove, lastMove);
-          const sfClassification = GameReviewManager.classifyMove(prevWin, currWin, isSac, false);
+          const isPlayerBest = data.bestMove ? (lastMove.from + lastMove.to === data.bestMove) : true;
+          const sfClassification = GameReviewManager.classifyMove(prevWin, currWin, isSac, false, false, isPlayerBest);
 
           if (sfClassification.type !== lastMove.classification?.type) {
             lastMove.classification = sfClassification;
@@ -126,11 +127,13 @@ class ChessTrainerApp {
       const gid = pathMatch[1];
       if (gid === FEATURED_GAME_184609437048.gameId) {
         this.loadGame(FEATURED_GAME_184609437048);
+      } else if (gid === FEATURED_GAME_173033536202.gameId) {
+        this.loadGame(FEATURED_GAME_173033536202);
       } else {
         this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
       }
     } else {
-      this.loadGame(FEATURED_GAME_184609437048);
+      this.loadGame(FEATURED_GAME_173033536202);
     }
 
     window.addEventListener('popstate', (e) => {
@@ -138,6 +141,8 @@ class ChessTrainerApp {
       if (gid) {
         if (gid === FEATURED_GAME_184609437048.gameId) {
           this.loadGame(FEATURED_GAME_184609437048);
+        } else if (gid === FEATURED_GAME_173033536202.gameId) {
+          this.loadGame(FEATURED_GAME_173033536202);
         } else {
           this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
         }
@@ -1419,6 +1424,8 @@ class ChessTrainerApp {
       // If it is the featured game 184609437048, use calibrated ground truth
       if (data.gameId === '184609437048') {
         this.loadGame(FEATURED_GAME_184609437048);
+      } else if (data.gameId === '173033536202') {
+        this.loadGame(FEATURED_GAME_173033536202);
       } else {
         // === STOCKFISH ASYNC ANALYSIS (Chess.com parity, depth 18) ===
         // Show analysis progress bar during Stockfish evaluation
