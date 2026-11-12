@@ -1,0 +1,264 @@
+
+=== Chess.com Calibration Tool — game 173033536202 ===
+Total plies: 116
+Chess.com Accuracy: W=73.07 B=64.82
+
+Starting Stockfish 19 NNUE...
+Stockfish ready.
+
+Progress: 0/117 (0.0s)
+Progress: 20/117 (5.0s)
+Progress: 40/117 (13.3s)
+Progress: 60/117 (18.2s)
+Progress: 80/117 (20.1s)
+Progress: 100/117 (21.8s)
+
+Evaluation done in 22.4s
+
+=== Per-Move Win% Table ===
+Ply | Side | Move        | PrevW  | CurrW  | Drop  | 2ndDrop | PlayerBest | Book
+----+------+-------------+--------+--------+-------+---------+------------+------
+  1 | w    | e4          |   53.0 |   52.0 |   1.0 |     1.0 | true       | true
+  2 | b    | d5          |   48.0 |   44.0 |   4.0 |     2.0 | false      | true
+  3 | w    | exd5        |   56.0 |   55.0 |   1.0 |     7.0 | true       | true
+  4 | b    | Qxd5        |   45.0 |   44.0 |   1.0 |     1.0 | true       | true
+  5 | w    | Nc3         |   56.0 |   56.0 |   0.0 |     1.0 | true       | true
+  6 | b    | Qe6+        |   44.0 |   41.0 |   3.0 |     2.0 | false      | false
+  7 | w    | Be2         |   59.0 |   59.0 |   0.0 |     5.0 | true       | true
+  8 | b    | Nc6         |   41.0 |   34.0 |   7.0 |     1.0 | false      | true <.>
+  9 | w    | Nf3         |   66.0 |   63.0 |   3.0 |     2.0 | false      | false
+ 10 | b    | Qg6         |   37.0 |   28.0 |   9.0 |     0.0 | false      | false <.>
+ 11 | w    | g3          |   72.0 |   52.0 |  20.0 |     3.0 | false      | false <!!>
+ 12 | b    | Bh3         |   48.0 |   44.0 |   4.0 |     0.0 | true       | false
+ 13 | w    | Nh4         |   56.0 |   44.0 |  12.0 |     2.0 | false      | false <!>
+ 14 | b    | Qf6         |   56.0 |   51.0 |   5.0 |     5.0 | false      | false <.>
+ 15 | w    | d3          |   49.0 |   44.0 |   5.0 |     5.0 | false      | false <.>
+ 16 | b    | O-O-O       |   56.0 |   35.0 |  21.0 |     3.0 | false      | false <!!>
+ 17 | w    | Nf3         |   65.0 |   40.0 |  25.0 |    16.0 | false      | false <!!>
+ 18 | b    | Ne5         |   60.0 |   40.0 |  20.0 |     8.0 | false      | false <!!>
+ 19 | w    | Nxe5        |   60.0 |   49.0 |  11.0 |     7.0 | false      | false <!>
+ 20 | b    | Qxe5        |   51.0 |   51.0 |   0.0 |    40.0 | true       | false
+ 21 | w    | Bf4         |   49.0 |   48.0 |   1.0 |     0.0 | true       | false
+ 22 | b    | Qe6         |   52.0 |   47.0 |   5.0 |     2.0 | false      | false <.>
+ 23 | w    | Nb5         |   53.0 |   25.0 |  28.0 |     2.0 | false      | false <!!>
+ 24 | b    | a6          |   75.0 |   47.0 |  28.0 |    24.0 | false      | false <!!>
+ 25 | w    | Nxc7        |   53.0 |   49.0 |   4.0 |     7.0 | true       | false
+ 26 | b    | Qc6         |   51.0 |   40.0 |  11.0 |     4.0 | false      | false <!>
+ 27 | w    | Bf3         |   60.0 |   66.0 |   0.0 |    13.0 | true       | false
+ 28 | b    | Qf6         |   34.0 |   24.0 |  10.0 |     3.0 | false      | false <!>
+ 29 | w    | Qe2         |   76.0 |   74.0 |   2.0 |     4.0 | false      | false
+ 30 | b    | Qxb2        |   26.0 |   24.0 |   2.0 |     1.0 | false      | false
+ 31 | w    | Qd1         |   76.0 |   33.0 |  43.0 |    20.0 | false      | false <!!>
+ 32 | b    | f6          |   67.0 |   24.0 |  43.0 |     8.0 | false      | false <!!>
+ 33 | w    | Qc1         |   76.0 |   24.0 |  52.0 |     5.0 | false      | false <!!>
+ 34 | b    | Qxc1+       |   76.0 |   77.0 |   0.0 |    12.0 | true       | false
+ 35 | w    | Rxc1        |   23.0 |   24.0 |   0.0 |     4.0 | true       | false
+ 36 | b    | e5          |   76.0 |   77.0 |   0.0 |    14.0 | true       | false
+ 37 | w    | Bxe5        |   23.0 |   18.0 |   5.0 |     1.0 | false      | false <.>
+ 38 | b    | fxe5        |   82.0 |   82.0 |   0.0 |     4.0 | true       | false
+ 39 | w    | Nd5         |   18.0 |   15.0 |   3.0 |     3.0 | false      | false
+ 40 | b    | Rxd5        |   85.0 |   83.0 |   2.0 |     0.0 | false      | false
+ 41 | w    | Bxd5        |   17.0 |   20.0 |   0.0 |     5.0 | true       | false
+ 42 | b    | Ne7         |   80.0 |   74.0 |   6.0 |     0.0 | false      | false <.>
+ 43 | w    | Bf3         |   26.0 |   25.0 |   1.0 |     0.0 | false      | false
+ 44 | b    | g5          |   75.0 |   67.0 |   8.0 |     1.0 | false      | false <.>
+ 45 | w    | g4          |   33.0 |   32.0 |   1.0 |     2.0 | false      | false
+ 46 | b    | Ng6         |   68.0 |   69.0 |   0.0 |     1.0 | true       | false
+ 47 | w    | Rg1         |   31.0 |   28.0 |   3.0 |     3.0 | false      | false
+ 48 | b    | Bd6         |   72.0 |   63.0 |   9.0 |     1.0 | false      | false <.>
+ 49 | w    | Rg3         |   37.0 |   29.0 |   8.0 |     7.0 | false      | false <.>
+ 50 | b    | Nf4         |   71.0 |   69.0 |   2.0 |     1.0 | false      | false
+ 51 | w    | Rb1         |   31.0 |   31.0 |   0.0 |     1.0 | true       | false
+ 52 | b    | a5          |   69.0 |   49.0 |  20.0 |    15.0 | false      | false <!!>
+ 53 | w    | Rxb7        |   51.0 |   52.0 |   0.0 |     3.0 | true       | false
+ 54 | b    | Bb4+        |   48.0 |   47.0 |   1.0 |     0.0 | false      | false
+ 55 | w    | Kd1         |   53.0 |   53.0 |   0.0 |    19.0 | true       | false
+ 56 | b    | Bf1         |   47.0 |   42.0 |   5.0 |     5.0 | false      | false <.>
+ 57 | w    | Ra7         |   58.0 |   55.0 |   3.0 |     2.0 | true       | false
+ 58 | b    | Be2+        |   45.0 |   18.0 |  27.0 |     2.0 | false      | false <!!>
+ 59 | w    | Bxe2        |   82.0 |   83.0 |   0.0 |    35.0 | true       | false
+ 60 | b    | Nxe2        |   17.0 |   10.0 |   7.0 |     4.0 | false      | false <.>
+ 61 | w    | Kxe2        |   90.0 |   90.0 |   0.0 |     2.0 | true       | false
+ 62 | b    | Kb8         |   10.0 |    9.0 |   1.0 |     0.0 | true       | false
+ 63 | w    | Rf7         |   91.0 |   90.0 |   1.0 |     2.0 | true       | false
+ 64 | b    | Rf8         |   10.0 |    9.0 |   1.0 |     0.0 | false      | false
+ 65 | w    | Rxf8+       |   91.0 |   91.0 |   0.0 |     1.0 | true       | false
+ 66 | b    | Bxf8        |    9.0 |    9.0 |   0.0 |     4.0 | true       | false
+ 67 | w    | Rh3         |   91.0 |   91.0 |   0.0 |     0.0 | false      | false
+ 68 | b    | h6          |    9.0 |    8.0 |   1.0 |     1.0 | true       | false
+ 69 | w    | Re3         |   92.0 |   92.0 |   0.0 |     1.0 | false      | false
+ 70 | b    | Bg7         |    8.0 |    8.0 |   0.0 |     0.0 | false      | false
+ 71 | w    | Rf3         |   92.0 |   92.0 |   0.0 |     1.0 | false      | false
+ 72 | b    | Kc7         |    8.0 |    5.0 |   3.0 |     2.0 | false      | false
+ 73 | w    | Rf7+        |   95.0 |   95.0 |   0.0 |     3.0 | true       | false
+ 74 | b    | Kd6         |    5.0 |    5.0 |   0.0 |     1.0 | false      | false
+ 75 | w    | Rxg7        |   95.0 |   96.0 |   0.0 |     2.0 | true       | false
+ 76 | b    | Kd5         |    4.0 |    4.0 |   0.0 |     0.0 | false      | false
+ 77 | w    | Rg6         |   96.0 |   96.0 |   0.0 |     0.0 | true       | false
+ 78 | b    | h5          |    4.0 |    2.0 |   2.0 |     0.0 | false      | false
+ 79 | w    | Rh6         |   98.0 |   95.0 |   3.0 |     1.0 | false      | false
+ 80 | b    | hxg4        |    5.0 |    5.0 |   0.0 |     2.0 | true       | false
+ 81 | w    | Kf1         |   95.0 |   94.0 |   1.0 |     0.0 | false      | false
+ 82 | b    | e4          |    6.0 |    5.0 |   1.0 |     1.0 | false      | false
+ 83 | w    | Kg2         |   95.0 |   93.0 |   2.0 |     0.0 | false      | false
+ 84 | b    | exd3        |    7.0 |    5.0 |   2.0 |     1.0 | false      | false
+ 85 | w    | cxd3        |   95.0 |   95.0 |   0.0 |     9.0 | true       | false
+ 86 | b    | Kd4         |    5.0 |    4.0 |   1.0 |     1.0 | true       | false
+ 87 | w    | Kg3         |   96.0 |   95.0 |   1.0 |     1.0 | false      | false
+ 88 | b    | Kxd3        |    5.0 |    4.0 |   1.0 |     0.0 | false      | false
+ 89 | w    | Kxg4        |   96.0 |   95.0 |   1.0 |     0.0 | false      | false
+ 90 | b    | Ke2         |    5.0 |    4.0 |   1.0 |     0.0 | true       | false
+ 91 | w    | Kxg5        |   96.0 |   94.0 |   2.0 |     0.0 | false      | false
+ 92 | b    | Kxf2        |    6.0 |    4.0 |   2.0 |     0.0 | false      | false
+ 93 | w    | Ra6         |   96.0 |   95.0 |   1.0 |     0.0 | false      | false
+ 94 | b    | Kg2         |    5.0 |    4.0 |   1.0 |     1.0 | false      | false
+ 95 | w    | Rxa5        |   96.0 |   95.0 |   1.0 |     0.0 | false      | false
+ 96 | b    | Kxh2        |    5.0 |    1.0 |   4.0 |     1.0 | false      | false
+ 97 | w    | Ra6         |   99.0 |   99.0 |   0.0 |     1.0 | false      | false
+ 98 | b    | Kg3         |    1.0 |    1.0 |   0.0 |     0.0 | false      | false
+ 99 | w    | Rb6         |   99.0 |  100.0 |   0.0 |     0.0 | false      | false
+100 | b    | Kf3         |    0.0 |    0.0 |   0.0 |     0.0 | true       | false
+101 | w    | a4          |  100.0 |   98.0 |   2.0 |     2.0 | false      | false
+102 | b    | Ke2         |    2.0 |    1.0 |   1.0 |     0.0 | false      | false
+103 | w    | a5          |   99.0 |   98.0 |   1.0 |     0.0 | true       | false
+104 | b    | Ke3         |    2.0 |    1.0 |   1.0 |     0.0 | false      | false
+105 | w    | a6          |   99.0 |   98.0 |   1.0 |     1.0 | false      | false
+106 | b    | Kd4         |    2.0 |    2.0 |   0.0 |     1.0 | true       | false
+107 | w    | a7          |   98.0 |   98.0 |   0.0 |     0.0 | false      | false
+108 | b    | Kc5         |    2.0 |    2.0 |   0.0 |     0.0 | false      | false
+109 | w    | Rb8         |   98.0 |   98.0 |   0.0 |     0.0 | true       | false
+110 | b    | Kc6         |    2.0 |    2.0 |   0.0 |     0.0 | false      | false
+111 | w    | a8=Q+       |   98.0 |   98.0 |   0.0 |     0.0 | false      | false
+112 | b    | Kd6         |    2.0 |    0.0 |   2.0 |     0.0 | true       | false
+113 | w    | Rb7         |  100.0 |   99.0 |   1.0 |     1.0 | false      | false
+114 | b    | Kd5         |    1.0 |    0.0 |   1.0 |     1.0 | false      | false
+115 | w    | Qa6         |  100.0 |  100.0 |   0.0 |     0.0 | false      | false
+116 | b    | Kd4         |    0.0 |    0.0 |   0.0 |     0.0 | false      | false
+
+
+=== Threshold Configuration Results ===
+
+--- Config-Original (Best≤0.8,Good≤2.5,Solid≤5,Inacc≤10,Mistake≤20,Blunder≥30,Miss≥15@60) ---
+Category        | W (Ref)  | B (Ref)  | WErr | BErr
+----------------+----------+----------+------+-----
+brilliant       | 25 (0)    | 5  (1)    | +25    | +4 <<<
+great           | 1  (2)    | 2  (1)    | -1    | +1
+book            | 4  (3)    | 3  (2)    | +1    | +1
+best            | 12 (23)    | 28 (18)    | -11    | +10 <<<
+good            | 6  (13)    | 4  (9)    | -7    | -5 <<<
+solid           | 3  (5)    | 8  (9)    | -2    | -1
+inaccuracy      | 2  (6)    | 2  (8)    | -4    | -6 <<<
+mistake         | 0  (0)    | 0  (6)    | +0    | -6 <<<
+miss            | 2  (3)    | 3  (3)    | -1    | +0
+blunder         | 3  (3)    | 3  (1)    | +0    | +2
+TOTAL ERROR vs Chess.com: 88
+
+--- Config-A (Best≤2.0,Good≤4.0,Solid≤7,Inacc≤12,Mistake≤20,Blunder≥30,Miss≥15@60) ---
+Category        | W (Ref)  | B (Ref)  | WErr | BErr
+----------------+----------+----------+------+-----
+brilliant       | 25 (0)    | 5  (1)    | +25    | +4 <<<
+great           | 1  (2)    | 2  (1)    | -1    | +1
+book            | 4  (3)    | 3  (2)    | +1    | +1
+best            | 17 (23)    | 30 (18)    | -6    | +12 <<<
+good            | 3  (13)    | 6  (9)    | -10    | -3 <<<
+solid           | 2  (5)    | 6  (9)    | -3    | -3 <<<
+inaccuracy      | 1  (6)    | 0  (8)    | -5    | -8 <<<
+mistake         | 0  (0)    | 0  (6)    | +0    | -6 <<<
+miss            | 2  (3)    | 3  (3)    | -1    | +0
+blunder         | 3  (3)    | 3  (1)    | +0    | +2
+TOTAL ERROR vs Chess.com: 92
+
+--- Config-B (Best≤2.5,Good≤5.0,Solid≤8,Inacc≤13,Mistake≤20,Blunder≥30,Miss≥15@60) ---
+Category        | W (Ref)  | B (Ref)  | WErr | BErr
+----------------+----------+----------+------+-----
+brilliant       | 25 (0)    | 5  (1)    | +25    | +4 <<<
+great           | 1  (2)    | 2  (1)    | -1    | +1
+book            | 4  (3)    | 3  (2)    | +1    | +1
+best            | 18 (23)    | 32 (18)    | -5    | +14 <<<
+good            | 2  (13)    | 5  (9)    | -11    | -4 <<<
+solid           | 3  (5)    | 5  (9)    | -2    | -4 <<<
+inaccuracy      | 0  (6)    | 0  (8)    | -6    | -8 <<<
+mistake         | 0  (0)    | 0  (6)    | +0    | -6 <<<
+miss            | 2  (3)    | 3  (3)    | -1    | +0
+blunder         | 3  (3)    | 3  (1)    | +0    | +2
+TOTAL ERROR vs Chess.com: 96
+
+--- Config-C (Best≤3.0,Good≤6.0,Solid≤9,Inacc≤14,Mistake≤20,Blunder≥30,Miss≥15@60) ---
+Category        | W (Ref)  | B (Ref)  | WErr | BErr
+----------------+----------+----------+------+-----
+brilliant       | 25 (0)    | 5  (1)    | +25    | +4 <<<
+great           | 1  (2)    | 2  (1)    | -1    | +1
+book            | 4  (3)    | 3  (2)    | +1    | +1
+best            | 20 (23)    | 35 (18)    | -3    | +17 <<<
+good            | 1  (13)    | 3  (9)    | -12    | -6 <<<
+solid           | 2  (5)    | 4  (9)    | -3    | -5 <<<
+inaccuracy      | 0  (6)    | 0  (8)    | -6    | -8 <<<
+mistake         | 0  (0)    | 0  (6)    | +0    | -6 <<<
+miss            | 2  (3)    | 3  (3)    | -1    | +0
+blunder         | 3  (3)    | 3  (1)    | +0    | +2
+TOTAL ERROR vs Chess.com: 102
+
+--- Config-D (Best≤2.0,Good≤4.0,Solid≤7,Inacc≤12,Mistake≤18,Blunder≥25,Miss≥15@55) ---
+Category        | W (Ref)  | B (Ref)  | WErr | BErr
+----------------+----------+----------+------+-----
+brilliant       | 25 (0)    | 5  (1)    | +25    | +4 <<<
+great           | 1  (2)    | 2  (1)    | -1    | +1
+book            | 4  (3)    | 3  (2)    | +1    | +1
+best            | 17 (23)    | 30 (18)    | -6    | +12 <<<
+good            | 3  (13)    | 6  (9)    | -10    | -3 <<<
+solid           | 2  (5)    | 6  (9)    | -3    | -3 <<<
+inaccuracy      | 1  (6)    | 0  (8)    | -5    | -8 <<<
+mistake         | 0  (0)    | 0  (6)    | +0    | -6 <<<
+miss            | 1  (3)    | 3  (3)    | -2    | +0
+blunder         | 4  (3)    | 3  (1)    | +1    | +2
+TOTAL ERROR vs Chess.com: 94
+
+--- Config-E (Best≤2.0,Good≤4.0,Solid≤7,Inacc≤12,Mistake≤20,Blunder≥20,Miss≥12@55) ---
+Category        | W (Ref)  | B (Ref)  | WErr | BErr
+----------------+----------+----------+------+-----
+brilliant       | 25 (0)    | 5  (1)    | +25    | +4 <<<
+great           | 1  (2)    | 2  (1)    | -1    | +1
+book            | 4  (3)    | 3  (2)    | +1    | +1
+best            | 17 (23)    | 30 (18)    | -6    | +12 <<<
+good            | 3  (13)    | 6  (9)    | -10    | -3 <<<
+solid           | 2  (5)    | 6  (9)    | -3    | -3 <<<
+inaccuracy      | 0  (6)    | 0  (8)    | -6    | -8 <<<
+mistake         | 0  (0)    | 0  (6)    | +0    | -6 <<<
+miss            | 1  (3)    | 0  (3)    | -2    | -3 <<<
+blunder         | 5  (3)    | 6  (1)    | +2    | +5 <<<
+TOTAL ERROR vs Chess.com: 102
+
+--- Config-F (Best≤2.0,Good≤5.0,Solid≤8,Inacc≤12,Mistake≤20,Blunder≥20,Miss≥15@60,Great2nd≥8) ---
+Category        | W (Ref)  | B (Ref)  | WErr | BErr
+----------------+----------+----------+------+-----
+brilliant       | 28 (0)    | 5  (1)    | +28    | +4 <<<
+great           | 2  (2)    | 2  (1)    | +0    | +1
+book            | 4  (3)    | 3  (2)    | +1    | +1
+best            | 14 (23)    | 32 (18)    | -9    | +14 <<<
+good            | 2  (13)    | 5  (9)    | -11    | -4 <<<
+solid           | 2  (5)    | 5  (9)    | -3    | -4 <<<
+inaccuracy      | 1  (6)    | 0  (8)    | -5    | -8 <<<
+mistake         | 0  (0)    | 0  (6)    | +0    | -6 <<<
+miss            | 0  (3)    | 0  (3)    | -3    | -3 <<<
+blunder         | 5  (3)    | 6  (1)    | +2    | +5 <<<
+TOTAL ERROR vs Chess.com: 112
+
+
+=== BEST CONFIG: "Config-Original (Best≤0.8,Good≤2.5,Solid≤5,Inacc≤10,Mistake≤20,Blunder≥30,Miss≥15@60)" with error=88 ===
+
+FINAL RECOMMENDED THRESHOLDS:
+{
+  "name": "Config-Original (Best≤0.8,Good≤2.5,Solid≤5,Inacc≤10,Mistake≤20,Blunder≥30,Miss≥15@60)",
+  "bestT": 0.8,
+  "goodT": 2.5,
+  "solidT": 5,
+  "inaccT": 10,
+  "mistakeT": 20,
+  "blunderT1": 30,
+  "blunderT2": 20,
+  "missT": 15,
+  "missMinPrev": 60,
+  "greatMaxDrop": 1,
+  "greatSecondDrop": 12,
+  "brilliantMaxDrop": 2.5
+}

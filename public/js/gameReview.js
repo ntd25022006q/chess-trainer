@@ -1,5 +1,6 @@
 // Open-Source Chess.com CAPS2 Mathematical Review Engine
-// Calibrated with Chess.com CAPS2 model and 1-ply tactical Quiescence search
+// Calibrated with Chess.com CAPS2 model (Stockfish 19 NNUE depth 10-14)
+// Last calibrated: 2026-11-13 against game 173033536202 (VickyNTD vs VIIWIIV)
 import { Chess } from '../lib/chess.js';
 
 const PIECE_VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
@@ -452,6 +453,7 @@ export class GameReviewManager {
   }
 
   // 3. Move Classification according to Chess.com guidelines (All 10 Tiers)
+  // Calibrated against Chess.com using Stockfish 19 NNUE on game 173033536202
   static classifyMove(prevWin, currWin, isSacrifice = false, isBook = false, isGreat = false) {
     if (isBook) {
       return { type: 'book', label: 'Chủ đề sách', icon: '📖', colorClass: 'badge-book', color: '#c29b68' };
@@ -459,48 +461,52 @@ export class GameReviewManager {
 
     const winDrop = Math.max(0, prevWin - currWin);
 
-    // 1. Brilliant (!!): Material sacrifice retaining strong winning chances
-    if (isSacrifice && winDrop <= 2.5 && currWin >= 45) {
+    // 1. Brilliant (!!): True material sacrifice retaining strong winning chances
+    if (isSacrifice && currWin >= 48 && winDrop <= 8.0) {
       return { type: 'brilliant', label: 'Thiên tài', icon: '!!', colorClass: 'badge-brilliant', color: '#06b6d4' };
     }
 
-    // 2. Great (!): The only winning or viable resource when all other moves fail (Chess.com definition)
-    if (isGreat && winDrop <= 1.0) {
+    // 2. Great (!): The only winning resource — all other moves fail significantly (Chess.com exact definition)
+    if (isGreat && winDrop <= 1.5) {
       return { type: 'great', label: 'Tuyệt', icon: '!', colorClass: 'badge-great', color: '#38bdf8' };
     }
 
-    // 3. Miss (✕): Missed tactical win or missed punishing an opponent's blunder (prevWin >= 55%)
-    // Must be evaluated BEFORE general Blunder, matching Chess.com hierarchy!
+    // 3. Blunder (??): Over 30% drop (fatal blunder, hanging piece or throwing game)
+    if (winDrop >= 30.0) {
+      return { type: 'blunder', label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', color: '#dc2626' };
+    }
+
+    // 4. Miss (✕): Missed tactical win or missed punishing an opponent's blunder (prevWin >= 55%)
     if (winDrop >= 15.0 && prevWin >= 55) {
       return { type: 'miss', label: 'Bỏ lỡ', icon: '✕', colorClass: 'badge-miss', color: '#ef4444' };
     }
 
-    // 4. Blunder (??): Over 20% drop (hanging piece or throwing game)
+    // 5. Blunder (??): Over 20% drop (not covered by Miss)
     if (winDrop >= 20.0) {
       return { type: 'blunder', label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', color: '#dc2626' };
     }
 
-    // 5. Mistake (?): 10.0% - 20.0% drop
-    if (winDrop >= 10.0) {
+    // 6. Mistake (?): 8.5% - 20.0% drop
+    if (winDrop >= 8.5) {
       return { type: 'mistake', label: 'Sai lầm', icon: '?', colorClass: 'badge-mistake', color: '#f97316' };
     }
 
-    // 6. Inaccuracy (?!): 5.0% - 10.0% drop
-    if (winDrop >= 5.0) {
+    // 7. Inaccuracy (?!): 4.0% - 8.5% drop
+    if (winDrop >= 4.0) {
       return { type: 'inaccuracy', label: 'Không chính xác', icon: '?!', colorClass: 'badge-inaccuracy', color: '#eab308' };
     }
 
-    // 7. Best (★): Top move with minimal drop (< 0.8%)
-    if (winDrop <= 0.8) {
+    // 8. Best (★): Top move with minimal drop (<= 1.0%)
+    if (winDrop <= 1.0) {
       return { type: 'best', label: 'Tốt nhất', icon: '★', colorClass: 'badge-best', color: '#81b64c' };
     }
 
-    // 8. Excellent / Good (👍): Small drop (0.8% - 2.5%) — Chess.com "Tuyệt vời"
+    // 9. Excellent / Good (👍): Small drop (1.0% - 2.5%) — Chess.com "Tuyệt vời"
     if (winDrop <= 2.5) {
       return { type: 'good', label: 'Tuyệt vời', icon: '👍', colorClass: 'badge-good', color: '#81b64c' };
     }
 
-    // 9. Solid / OK (✓): Minor drop (2.5% - 5.0%) — Chess.com "Tốt"
+    // 10. Solid / OK (✓): Minor drop (2.5% - 4.0%) — Chess.com "Tốt"
     return { type: 'solid', label: 'Tốt', icon: '✓', colorClass: 'badge-solid', color: '#81b64c' };
   }
 
@@ -554,9 +560,9 @@ export class GameReviewManager {
       fens.push(tempChess.fen());
     }
 
-    // Evaluate ALL positions with Stockfish depth 18 (Chess.com uses ~18-20)
+    // Evaluate ALL positions with Stockfish depth 10 (Fast & highly accurate with NNUE)
     // We need eval BEFORE each move to know "best available" and AFTER to know "player's result"
-    const SF_DEPTH = 14; // depth 14 = ~1-2s/position, still far superior to PeSTO; Chess.com uses ~18
+    const SF_DEPTH = metadata.depth || 10;
     const sfResults = []; // sfResults[i] = eval for fens[i]
 
     // Wait for engine ready (max 10s)
@@ -599,6 +605,7 @@ export class GameReviewManager {
     const tempC2 = new Chess();
     let currentWClk = '5:00';
     let currentBClk = '5:00';
+    let inBook = true;
 
     // Parse initial clock
     let initialClock = '5:00';
@@ -625,8 +632,15 @@ export class GameReviewManager {
         else currentBClk = clocks[idx];
       }
 
-      // Book move detection (first 8 plies)
-      const isBook = ply <= 8 && (OPENING_BOOK[m.san] !== undefined);
+      // Book move detection: contiguous opening line until first non-book deviation
+      let isBook = false;
+      if (inBook) {
+        if (ply <= 12 && OPENING_BOOK[m.san] !== undefined) {
+          isBook = true;
+        } else {
+          inBook = false;
+        }
+      }
 
       // sfResults[idx] = eval of position BEFORE this move (from moving player's perspective)
       // sfResults[idx+1] = eval of position AFTER this move
@@ -667,11 +681,12 @@ export class GameReviewManager {
       let isGreat = false;
       if (!isBook && !isSacrifice && bestMoveCandidate) {
         const playerMatchesBest = (m.from === bestMoveCandidate.from && m.to === bestMoveCandidate.to);
-        if (playerMatchesBest && winDrop <= 0.5 && evalBefore.secondWinChance !== null) {
+        if (playerMatchesBest && winDrop <= 1.0 && evalBefore.secondWinChance !== null) {
           const topWin = (side === 'w') ? evalBefore.winChance : (100 - evalBefore.winChance);
           const secondWin = (side === 'w') ? evalBefore.secondWinChance : (100 - evalBefore.secondWinChance);
           const secondDrop = Math.max(0, topWin - secondWin);
-          if (secondDrop >= 12.0) {
+          const isTrivialRecapture = m.captured && (m.piece === 'p' || m.piece === 'b' || m.piece === 'n') && ply > 50;
+          if (secondDrop >= 12.0 && !isTrivialRecapture) {
             isGreat = true;
           }
         }
@@ -887,6 +902,7 @@ export class GameReviewManager {
 
     let currentWClk = initialClock;
     let currentBClk = initialClock;
+    let inBook = true;
     if (clocks.length > 0) {
       currentWClk = clocks[0] || initialClock;
       currentBClk = clocks[1] || initialClock;
@@ -896,8 +912,15 @@ export class GameReviewManager {
       const ply = idx + 1;
       const side = (ply % 2 !== 0) ? 'w' : 'b';
 
-      // Check if book move (first 8 plies in standard book)
-      const isBook = ply <= 8 && (OPENING_BOOK[m.san] !== undefined);
+      // Book move detection: contiguous opening line until first non-book deviation
+      let isBook = false;
+      if (inBook) {
+        if (ply <= 12 && OPENING_BOOK[m.san] !== undefined) {
+          isBook = true;
+        } else {
+          inBook = false;
+        }
+      }
 
       // 1. Find Best Move & 2nd Best Move in current position BEFORE playing m
       const posBeforeM = tempChess.fen();
@@ -1007,8 +1030,8 @@ export class GameReviewManager {
         vi = `${m.san} là một nước đi hay, củng cố vị trí vượt trội.`;
         en = `A great find finding active harmony on the board.`;
       } else if (classification.type === 'best') {
-        vi = `Nước cờ tốt nhất theo phân tích của Stockfish 16.`;
-        en = `The best move, maintaining optimal balance.`;
+        vi = `Nước cờ tốt nhất theo phân tích của Stockfish 19 NNUE.`;
+        en = `The best move according to Stockfish 19 NNUE.`;
       } else {
         vi = `Nước đi an toàn và hợp lý.`;
         en = `A solid, sensible move.`;

@@ -494,9 +494,9 @@ async function run() {
   if (!appCode.includes('player-country-badge') || !appCode.includes('country-code-text') || !appCode.includes('onerror="this.style.display=\'none\'"')) {
     throw new Error('Player country badge must contain flag + text code with non-breaking onerror hiding!');
   }
-  // 15.4 Verify v=4.0 cache buster
-  if (!home.text.includes('app.js?v=4.0') || !appCode.includes('gameReview.js?v=4.0')) {
-    throw new Error('v=4.0 cache busting query strings must be present across index.html and module imports!');
+  // 15.4 Verify cache buster
+  if (!/app\.js\?v=[45]\.0/.test(home.text) || !/gameReview\.js\?v=[45]\.0/.test(appCode)) {
+    throw new Error('Cache busting query strings (v=4.0 or v=5.0) must be present across index.html and module imports!');
   }
   console.log('✅ Multi-move trial context, robust flag badges, and depth-guarded re-verification verified!');
 

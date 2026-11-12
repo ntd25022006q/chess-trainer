@@ -1,10 +1,10 @@
 import { Chess } from '../lib/chess.js';
-import { StockfishEngine } from './engine.js?v=4.0';
-import { ChessBoardUI } from './board.js?v=4.0';
-import { chessAudio } from './audio.js?v=4.0';
-import { FEATURED_GAME_184609437048 } from './gameData.js?v=4.0';
-import { AdvantageChart } from './chart.js?v=4.0';
-import { GameReviewManager } from './gameReview.js?v=4.0';
+import { StockfishEngine } from './engine.js?v=5.0';
+import { ChessBoardUI } from './board.js?v=5.0';
+import { chessAudio } from './audio.js?v=5.0';
+import { FEATURED_GAME_184609437048 } from './gameData.js?v=5.0';
+import { AdvantageChart } from './chart.js?v=5.0';
+import { GameReviewManager } from './gameReview.js?v=5.0';
 
 export function formatSanWithSymbol(san, color = 'w') {
   if (!san) return '';
@@ -1626,7 +1626,7 @@ class ChessTrainerApp {
 
       this.updateCapturedPieces();
 
-      // Launch deep background Stockfish 16 analysis
+      // Launch deep background Stockfish 19 NNUE analysis
       this.engine.analyzePosition(this.chess.fen(), 14);
     } catch (e) {
       console.warn('Move attempt error:', e);
