@@ -66,102 +66,53 @@ class ChessTrainerApp {
 
     // 4. Initialize Engine & Multi-PV Analysis Callback
     this.engine.onReadyCallback = () => {
-      console.log('Stockfish 16 Engine is ready');
+      console.log('Stockfish Engine is ready');
     };
     this.engine.onAnalysisCallback = (data) => {
-      if (this.isTrialMode && this.trialMoves.length > 0) {
-        const currentFen = this.chess.fen();
-        if (this.engine.currentFen === currentFen) {
-          const score = (data.scoreWhite !== undefined) ? data.scoreWhite : 0;
-          const sign = score >= 0 ? '+' : '';
-          const evalText = data.isMate ? (score > 0 ? '+#M' : '-#M') : `${sign}${(score / 100).toFixed(2)}`;
-          const evalTag = document.getElementById('walkthroughEvalPill');
-          if (evalTag) {
-            evalTag.textContent = evalText;
-          }
-          this.updateEvalBarDisplay(evalText, data.winChance);
-          if (data.pv) {
-            this.currentTrialPv = data.pv.split(' ');
-          }
+      // During standard Game Review walkthrough, review evaluations are pre-computed & rock-solid.
+      // Stockfish callback ONLY operates in interactive Trial Mode to prevent flickering.
+      if (!this.isTrialMode || this.trialMoves.length === 0) return;
 
-          // Stockfish 16 Deep Move Re-verification (Only at depth >= 12 to avoid shallow evaluation noise)
-          const lastMove = this.trialMoves[this.trialMoves.length - 1];
-          if (lastMove && !lastMove.isBook && (data.depth >= 12 || lastMove.classification?.type === 'blunder')) {
-            const currWinChance = data.winChance || GameReviewManager.calculateWinChance(score);
-            const movingSide = lastMove.color || 'w';
-            const currWin = (movingSide === 'w') ? currWinChance : (100 - currWinChance);
-            const prevWin = lastMove.prevWin || 50;
-            const fenBeforeMove = lastMove.prevFen || this.trialBaseFen;
-            const isSac = GameReviewManager.isTrueSacrifice(fenBeforeMove, lastMove);
-            const sfClassification = GameReviewManager.classifyMove(prevWin, currWin, isSac, false);
+      const currentFen = this.chess.fen();
+      if (this.engine.currentFen !== currentFen) return;
 
-            // Stockfish 16 Deep Analysis precision upgrade
-            if (sfClassification.type !== lastMove.classification?.type) {
-              lastMove.classification = sfClassification;
-              this.board.setSquareBadge(lastMove.to, sfClassification.icon, sfClassification.colorClass);
+      if (data.pv) {
+        this.currentTrialPv = data.pv.split(' ');
+      }
 
-              if (['blunder', 'mistake', 'miss'].includes(sfClassification.type)) {
-                this.board.squareHighlights = {
-                  [lastMove.from]: 'rgba(235, 97, 80, 0.45)',
-                  [lastMove.to]: 'rgba(235, 97, 80, 0.45)'
-                };
-                const baseChess = new Chess(fenBeforeMove);
-                const bestCandidate = GameReviewManager.getBestCandidateMove(baseChess);
-                if (bestCandidate) {
-                  this.board.arrows = [{ from: bestCandidate.from, to: bestCandidate.to, color: '#81b64c', opacity: 0.95 }];
-                }
-              } else if (['brilliant', 'great'].includes(sfClassification.type)) {
-                this.board.squareHighlights = {
-                  [lastMove.from]: 'rgba(56, 189, 248, 0.45)',
-                  [lastMove.to]: 'rgba(56, 189, 248, 0.45)'
-                };
-                const turnChess = new Chess(this.chess.fen());
-                const bestNextCandidate = GameReviewManager.getBestCandidateMove(turnChess);
-                if (bestNextCandidate) {
-                  this.board.arrows = [{ from: bestNextCandidate.from, to: bestNextCandidate.to, color: '#38bdf8', opacity: 0.95 }];
-                }
+      // Smooth evaluation update only at mature depth (>= 12) or checkmate to eliminate flicker
+      if (data.depth >= 12 || data.isMate) {
+        const score = (data.scoreWhite !== undefined) ? data.scoreWhite : 0;
+        const sign = score >= 0 ? '+' : '';
+        const evalText = data.isMate ? (score > 0 ? '+#M' : '-#M') : `${sign}${(score / 100).toFixed(2)}`;
+        const evalTag = document.getElementById('walkthroughEvalPill');
+        if (evalTag) {
+          evalTag.textContent = evalText;
+        }
+        this.updateEvalBarDisplay(evalText, data.winChance);
+
+        const lastMove = this.trialMoves[this.trialMoves.length - 1];
+        if (lastMove && !lastMove.isBook) {
+          const currWinChance = data.winChance || GameReviewManager.calculateWinChance(score);
+          const movingSide = lastMove.color || 'w';
+          const currWin = (movingSide === 'w') ? currWinChance : (100 - currWinChance);
+          const prevWin = lastMove.prevWin || 50;
+          const fenBeforeMove = lastMove.prevFen || this.trialBaseFen;
+          const isSac = GameReviewManager.isTrueSacrifice(fenBeforeMove, lastMove);
+          const sfClassification = GameReviewManager.classifyMove(prevWin, currWin, isSac, false);
+
+          if (sfClassification.type !== lastMove.classification?.type) {
+            lastMove.classification = sfClassification;
+            this.board.setSquareBadge(lastMove.to, sfClassification.icon, sfClassification.colorClass);
+
+            const pillTag = document.getElementById('walkthroughMovePill');
+            if (pillTag) {
+              if (sfClassification.type === 'brilliant') {
+                pillTag.innerHTML = `<span class="badge-tag badge-brilliant">‼</span> ${formatSanWithSymbol(lastMove.san, movingSide)} thiên tài`;
+              } else if (sfClassification.type === 'best') {
+                pillTag.innerHTML = `<span class="badge-tag badge-best">★</span> ${formatSanWithSymbol(lastMove.san, movingSide)} là nước tốt nhất`;
               } else {
-                this.board.squareHighlights = {
-                  [lastMove.from]: 'rgba(129, 182, 76, 0.45)',
-                  [lastMove.to]: 'rgba(129, 182, 76, 0.45)'
-                };
-                const turnChess = new Chess(this.chess.fen());
-                const bestNextCandidate = GameReviewManager.getBestCandidateMove(turnChess);
-                if (bestNextCandidate) {
-                  this.board.arrows = [{ from: bestNextCandidate.from, to: bestNextCandidate.to, color: '#38bdf8', opacity: 0.95 }];
-                }
-              }
-              this.board.renderBoard();
-
-              const pillTag = document.getElementById('walkthroughMovePill');
-              if (pillTag) {
-                if (sfClassification.type === 'brilliant') {
-                  pillTag.innerHTML = `<span class="badge-tag badge-brilliant">‼</span> ${formatSanWithSymbol(lastMove.san, movingSide)} thiên tài`;
-                } else if (sfClassification.type === 'best') {
-                  pillTag.innerHTML = `<span class="badge-tag badge-best">★</span> ${formatSanWithSymbol(lastMove.san, movingSide)} là nước tốt nhất`;
-                } else {
-                  pillTag.innerHTML = `<span class="badge-tag ${sfClassification.colorClass}">${sfClassification.icon}</span> ${formatSanWithSymbol(lastMove.san, movingSide)} ${sfClassification.label.toLowerCase()}`;
-                }
-              }
-
-              const coachText = document.getElementById('walkthroughCoachText');
-              if (coachText) {
-                if (sfClassification.type === 'brilliant') {
-                  coachText.innerHTML = `
-                    Nước đi thử nghiệm trên bàn cờ.<br>
-                    <span class="sub-commentary">Tuyệt đỉnh thiên tài! Nước thí quân ngoạn mục mở toang thế trận phòng thủ của đối phương!</span>
-                  `;
-                } else if (sfClassification.type === 'blunder') {
-                  coachText.innerHTML = `
-                    Nước đi thử nghiệm trên bàn cờ.<br>
-                    <span class="sub-commentary">Sai lầm nghiêm trọng! Bạn đã bỏ lỡ nước đi tốt hơn và làm mất ưu thế lớn.</span>
-                  `;
-                } else if (sfClassification.type === 'mistake') {
-                  coachText.innerHTML = `
-                    Nước đi thử nghiệm trên bàn cờ.<br>
-                    <span class="sub-commentary">Nước cờ sai sót! Phương án này tạo cơ hội phản công cho đối thủ.</span>
-                  `;
-                }
+                pillTag.innerHTML = `<span class="badge-tag ${sfClassification.colorClass}">${sfClassification.icon}</span> ${formatSanWithSymbol(lastMove.san, movingSide)} ${sfClassification.label.toLowerCase()}`;
               }
             }
           }
@@ -841,36 +792,26 @@ class ChessTrainerApp {
         en: 'A solid, sensible move.'
       };
 
-      // Generate rich MultiPV arrows if not explicitly configured
+      // Authentic Chess.com Single/Dual Arrow System (Zero visual clutter)
       let moveArrows = commentary.arrows;
       if (!moveArrows || moveArrows.length === 0) {
         moveArrows = [];
-        let primaryColor = '#81b64c';
-        if (['badge-blunder', 'badge-mistake', 'badge-miss'].includes(commentary.badgeClass)) {
-          primaryColor = '#ef4444';
-        } else if (['badge-great', 'badge-brilliant'].includes(commentary.badgeClass)) {
-          primaryColor = '#38bdf8';
-        } else if (commentary.badgeClass === 'badge-book') {
-          primaryColor = '#c29b68';
-        }
-        moveArrows.push({ from: m.from, to: m.to, color: primaryColor, opacity: 0.9 });
-
-        if (commentary.bestMove && (commentary.bestMove.from !== m.from || commentary.bestMove.to !== m.to)) {
-          moveArrows.push({ from: commentary.bestMove.from, to: commentary.bestMove.to, color: '#81b64c', opacity: 0.95 });
-        }
-        if (commentary.threat) {
-          moveArrows.push({ from: commentary.threat.from, to: commentary.threat.to, color: '#ef4444', opacity: 0.9 });
-        }
-
-        const legals = tempChess.moves({ verbose: true });
-        const alternatives = legals.filter(lm => lm.from !== m.from || lm.to !== m.to);
-        if (alternatives.length > 0) {
-          const cand2 = alternatives[0];
-          moveArrows.push({ from: cand2.from, to: cand2.to, color: '#38bdf8', opacity: 0.65, width: 12 });
-          if (alternatives.length > 1) {
-            const cand3 = alternatives[1];
-            moveArrows.push({ from: cand3.from, to: cand3.to, color: '#a3e635', opacity: 0.45, width: 10 });
+        if (['badge-blunder', 'badge-mistake', 'badge-miss', 'badge-inaccuracy'].includes(commentary.badgeClass)) {
+          // In Chess.com, mistakes show the best move that should have been played
+          if (commentary.bestMove && (commentary.bestMove.from !== m.from || commentary.bestMove.to !== m.to)) {
+            moveArrows.push({ from: commentary.bestMove.from, to: commentary.bestMove.to, color: '#81b64c', opacity: 0.95 });
+          } else {
+            moveArrows.push({ from: m.from, to: m.to, color: '#ef4444', opacity: 0.9 });
           }
+          if (commentary.threat) {
+            moveArrows.push({ from: commentary.threat.from, to: commentary.threat.to, color: '#f59e0b', opacity: 0.9 });
+          }
+        } else if (commentary.badgeClass === 'badge-book') {
+          moveArrows.push({ from: m.from, to: m.to, color: '#c29b68', opacity: 0.9 });
+        } else if (commentary.badgeClass === 'badge-brilliant') {
+          moveArrows.push({ from: m.from, to: m.to, color: '#06b6d4', opacity: 0.95 });
+        } else {
+          moveArrows.push({ from: m.from, to: m.to, color: '#81b64c', opacity: 0.9 });
         }
       }
 

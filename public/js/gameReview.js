@@ -440,7 +440,7 @@ export class GameReviewManager {
   }
 
   // 3. Move Classification according to Chess.com guidelines (All 10 Tiers)
-  static classifyMove(prevWin, currWin, isSacrifice = false, isBook = false) {
+  static classifyMove(prevWin, currWin, isSacrifice = false, isBook = false, isGreat = false) {
     if (isBook) {
       return { type: 'book', label: 'Chủ đề sách', icon: '📖', colorClass: 'badge-book', color: '#c29b68' };
     }
@@ -448,46 +448,46 @@ export class GameReviewManager {
     const winDrop = Math.max(0, prevWin - currWin);
 
     // 1. Brilliant (!!): Material sacrifice retaining strong winning chances
-    if (isSacrifice && winDrop <= 2.5 && currWin >= 55) {
+    if (isSacrifice && winDrop <= 2.5 && currWin >= 45) {
       return { type: 'brilliant', label: 'Thiên tài', icon: '!!', colorClass: 'badge-brilliant', color: '#06b6d4' };
     }
 
-    // 2. Blunder (??): Over 22% drop (hanging piece or throwing game)
-    if (winDrop >= 22.0) {
-      return { type: 'blunder', label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', color: '#dc2626' };
-    }
-
-    // 3. Miss (✕): 16% - 22% drop
-    if (winDrop >= 16.0) {
-      return { type: 'miss', label: 'Bỏ lỡ', icon: '✕', colorClass: 'badge-miss', color: '#ef4444' };
-    }
-
-    // 4. Mistake (?): 9.5% - 16% drop
-    if (winDrop >= 9.5) {
-      return { type: 'mistake', label: 'Sai lầm', icon: '?', colorClass: 'badge-mistake', color: '#f97316' };
-    }
-
-    // 5. Inaccuracy (?!): 4.5% - 9.5% drop
-    if (winDrop >= 4.5) {
-      return { type: 'inaccuracy', label: 'Không chính xác', icon: '?!', colorClass: 'badge-inaccuracy', color: '#eab308' };
-    }
-
-    // 6. Great (!): Sharp move improving winning chances in a viable/winning position
-    if (winDrop <= 0.5 && currWin > prevWin && currWin >= 50) {
+    // 2. Great (!): The only winning or viable resource when all other moves fail (Chess.com definition)
+    if (isGreat && winDrop <= 1.0) {
       return { type: 'great', label: 'Tuyệt', icon: '!', colorClass: 'badge-great', color: '#38bdf8' };
     }
 
-    // 7. Best (★): Top move with minimal drop (< 1.5%)
-    if (winDrop <= 1.5) {
+    // 3. Blunder (??): Over 20% drop (hanging piece or throwing game)
+    if (winDrop >= 20.0) {
+      return { type: 'blunder', label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', color: '#dc2626' };
+    }
+
+    // 4. Miss (✕): 15% - 20% drop (missed tactical win / major advantage)
+    if (winDrop >= 15.0 && prevWin >= 60) {
+      return { type: 'miss', label: 'Bỏ lỡ', icon: '✕', colorClass: 'badge-miss', color: '#ef4444' };
+    }
+
+    // 5. Mistake (?): 10.0% - 20.0% drop
+    if (winDrop >= 10.0) {
+      return { type: 'mistake', label: 'Sai lầm', icon: '?', colorClass: 'badge-mistake', color: '#f97316' };
+    }
+
+    // 6. Inaccuracy (?!): 5.0% - 10.0% drop
+    if (winDrop >= 5.0) {
+      return { type: 'inaccuracy', label: 'Không chính xác', icon: '?!', colorClass: 'badge-inaccuracy', color: '#eab308' };
+    }
+
+    // 7. Best (★): Top move with minimal drop (< 1.0%)
+    if (winDrop <= 1.0) {
       return { type: 'best', label: 'Tốt nhất', icon: '★', colorClass: 'badge-best', color: '#81b64c' };
     }
 
-    // 8. Excellent / Good (👍): Small drop (1.5% - 3.0%)
-    if (winDrop <= 3.0) {
+    // 8. Excellent / Good (👍): Small drop (1.0% - 2.5%)
+    if (winDrop <= 2.5) {
       return { type: 'good', label: 'Tuyệt vời', icon: '👍', colorClass: 'badge-good', color: '#81b64c' };
     }
 
-    // 9. Solid / OK (✓): Small drop (3.0% - 4.5%)
+    // 9. Solid / OK (✓): Small drop (2.5% - 5.0%)
     return { type: 'solid', label: 'Tốt', icon: '✓', colorClass: 'badge-solid', color: '#81b64c' };
   }
 
@@ -576,6 +576,7 @@ export class GameReviewManager {
       let bestMoveCandidate = null;
       let secondBestCandidate = null;
       let bestEval = (side === 'w') ? -999999 : 999999;
+      let isGreat = false;
 
       if (isBook) {
         bestMoveCandidate = m;
@@ -597,6 +598,18 @@ export class GameReviewManager {
         bestMoveCandidate = scoredMoves[0]?.move || null;
         secondBestCandidate = scoredMoves[1]?.move || null;
         if (scoredMoves[0]) bestEval = scoredMoves[0].cp;
+        const secondBestCp = scoredMoves[1] ? scoredMoves[1].cp : (side === 'w' ? bestEval - 150 : bestEval + 150);
+
+        // Check if top move is significantly better than second best (Chess.com "Great" definition)
+        if (scoredMoves.length >= 2) {
+          const secondWhiteWin = this.calculateWinChance(secondBestCp);
+          const secondWin = (side === 'w') ? secondWhiteWin : (100 - secondWhiteWin);
+          const topWin = (side === 'w') ? this.calculateWinChance(bestEval) : (100 - this.calculateWinChance(bestEval));
+          const secondDrop = Math.max(0, topWin - secondWin);
+          if (secondDrop >= 6.0 && topWin >= 45 && (m.from === bestMoveCandidate?.from && m.to === bestMoveCandidate?.to)) {
+            isGreat = true;
+          }
+        }
       }
 
       // 2. Play the actual game move
@@ -621,7 +634,7 @@ export class GameReviewManager {
 
       const isSacrifice = this.isTrueSacrifice(fenBeforeMove, m);
 
-      const classification = this.classifyMove(prevWin, currWin, isSacrifice, isBook);
+      const classification = this.classifyMove(prevWin, currWin, isSacrifice, isBook, isGreat);
 
       if (breakdownCounts[side][classification.type] !== undefined) {
         breakdownCounts[side][classification.type]++;
