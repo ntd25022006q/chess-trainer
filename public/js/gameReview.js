@@ -513,7 +513,7 @@ export class GameReviewManager {
     return { type: 'solid', label: 'Tốt', icon: '✓', colorClass: 'badge-solid', color: '#81b64c' };
   }
 
-  // Parse clocks from PGN comments
+  // Parse clocks from PGN comments (supports sub-second tenths under 20s, e.g. 0:12.5, 0:01.1)
   static parsePgnClocks(pgn) {
     const clkRegex = /\[%clk\s+([0-9:.]+)\]/g;
     const clocks = [];
@@ -522,14 +522,60 @@ export class GameReviewManager {
       let raw = match[1];
       const parts = raw.split(':');
       if (parts.length === 3) {
+        const hours = parseInt(parts[0], 10);
         const min = parseInt(parts[1], 10);
-        const sec = Math.floor(parseFloat(parts[2]));
-        clocks.push(`${min}:${sec < 10 ? '0' : ''}${sec}`);
+        const secVal = parseFloat(parts[2]);
+        const totalMinutes = hours * 60 + min;
+        if (totalMinutes === 0 && secVal < 20) {
+          const secFormatted = secVal.toFixed(1);
+          const [s, ms] = secFormatted.split('.');
+          const paddedS = s.padStart(2, '0');
+          clocks.push(`0:${paddedS}.${ms}`);
+        } else {
+          const sec = Math.floor(secVal);
+          clocks.push(`${totalMinutes}:${sec < 10 ? '0' : ''}${sec}`);
+        }
+      } else if (parts.length === 2) {
+        const min = parseInt(parts[0], 10);
+        const secVal = parseFloat(parts[1]);
+        if (min === 0 && secVal < 20) {
+          const secFormatted = secVal.toFixed(1);
+          const [s, ms] = secFormatted.split('.');
+          const paddedS = s.padStart(2, '0');
+          clocks.push(`0:${paddedS}.${ms}`);
+        } else {
+          const sec = Math.floor(secVal);
+          clocks.push(`${min}:${sec < 10 ? '0' : ''}${sec}`);
+        }
       } else {
         clocks.push(raw);
       }
     }
     return clocks;
+  }
+
+  // Parse clock raw seconds for move elapsed time (Chess.com | 0.1s parity)
+  static parsePgnClockSeconds(pgn) {
+    const clkRegex = /\[%clk\s+([0-9:.]+)\]/g;
+    const seconds = [];
+    let match;
+    while ((match = clkRegex.exec(pgn)) !== null) {
+      let raw = match[1];
+      const parts = raw.split(':');
+      if (parts.length === 3) {
+        const hours = parseInt(parts[0], 10);
+        const min = parseInt(parts[1], 10);
+        const secVal = parseFloat(parts[2]);
+        seconds.push(hours * 3600 + min * 60 + secVal);
+      } else if (parts.length === 2) {
+        const min = parseInt(parts[0], 10);
+        const secVal = parseFloat(parts[1]);
+        seconds.push(min * 60 + secVal);
+      } else {
+        seconds.push(parseFloat(raw) || 0);
+      }
+    }
+    return seconds;
   }
 
   // Static and Quiescence evaluation mapped to ultra-fast PeSTO
@@ -626,13 +672,49 @@ export class GameReviewManager {
       }
     }
 
+    // Detect timeout side if any
+    const termMatch = pgn.match(/\[Termination\s+"([^"]+)"\]/i);
+    const termination = termMatch ? termMatch[1] : '';
+    const isTimeout = /timeout|time vs|won on time/i.test(termination) ||
+                      (metadata.players?.white?.result && metadata.players.white.result.includes('time')) ||
+                      (metadata.players?.black?.result && metadata.players.black.result.includes('time'));
+    let timeoutSide = null;
+    if (isTimeout) {
+      if (metadata.players?.white?.result && metadata.players.white.result.includes('time')) {
+        timeoutSide = 'w';
+      } else if (metadata.players?.black?.result && metadata.players.black.result.includes('time')) {
+        timeoutSide = 'b';
+      } else {
+        timeoutSide = (moves.length % 2 === 0) ? 'w' : 'b';
+      }
+    }
+
+    const clockSeconds = this.parsePgnClockSeconds(pgn);
+    let baseTimeSec = 180;
+    if (tcMatch) {
+      const bSec = parseInt(tcMatch[1].split('+')[0], 10);
+      if (!isNaN(bSec) && bSec > 0) baseTimeSec = bSec;
+    }
+
     moves.forEach((m, idx) => {
       const ply = idx + 1;
       const side = m.color; // 'w' or 'b'
 
+      let timeSpent = '';
+      if (clockSeconds && clockSeconds[idx] !== undefined) {
+        const prevSec = (idx <= 1) ? baseTimeSec : (clockSeconds[idx - 2] !== undefined ? clockSeconds[idx - 2] : clockSeconds[idx]);
+        const diff = Math.max(0.1, +(prevSec - clockSeconds[idx]).toFixed(1));
+        timeSpent = diff < 60 ? `${diff.toFixed(1)}s` : `${Math.floor(diff / 60)}m ${Math.floor(diff % 60)}s`;
+      }
+
       if (clocks[idx]) {
         if (side === 'w') currentWClk = clocks[idx];
         else currentBClk = clocks[idx];
+      }
+
+      if (idx === moves.length - 1 && timeoutSide) {
+        if (timeoutSide === 'w') currentWClk = '⊝ 0:00';
+        else currentBClk = '⊝ 0:00';
       }
 
       // Book move detection: contiguous opening line until first non-book deviation
@@ -788,6 +870,7 @@ export class GameReviewManager {
         winChance: currWhiteWC,
         wClk: currentWClk,
         bClk: currentBClk,
+        timeSpent,
         vi, en,
         bestMove: bestMoveCandidate ? { from: bestMoveCandidate.from, to: bestMoveCandidate.to, san: bestMoveCandidate.san } : null,
         threat: null,
@@ -911,9 +994,45 @@ export class GameReviewManager {
       currentBClk = clocks[1] || initialClock;
     }
 
+    // Detect timeout side if any
+    const termMatch = pgn.match(/\[Termination\s+"([^"]+)"\]/i);
+    const termination = termMatch ? termMatch[1] : '';
+    const isTimeout = /timeout|time vs|won on time/i.test(termination) ||
+                      (metadata.players?.white?.result && metadata.players.white.result.includes('time')) ||
+                      (metadata.players?.black?.result && metadata.players.black.result.includes('time'));
+    let timeoutSide = null;
+    if (isTimeout) {
+      if (metadata.players?.white?.result && metadata.players.white.result.includes('time')) {
+        timeoutSide = 'w';
+      } else if (metadata.players?.black?.result && metadata.players.black.result.includes('time')) {
+        timeoutSide = 'b';
+      } else {
+        timeoutSide = (moves.length % 2 === 0) ? 'w' : 'b';
+      }
+    }
+
+    const clockSeconds = this.parsePgnClockSeconds(pgn);
+    let baseTimeSec = 180;
+    if (tcMatch) {
+      const bSec = parseInt(tcMatch[1].split('+')[0], 10);
+      if (!isNaN(bSec) && bSec > 0) baseTimeSec = bSec;
+    }
+
     moves.forEach((m, idx) => {
       const ply = idx + 1;
       const side = (ply % 2 !== 0) ? 'w' : 'b';
+
+      let timeSpent = '';
+      if (clockSeconds && clockSeconds[idx] !== undefined) {
+        const prevSec = (idx <= 1) ? baseTimeSec : (clockSeconds[idx - 2] !== undefined ? clockSeconds[idx - 2] : clockSeconds[idx]);
+        const diff = Math.max(0.1, +(prevSec - clockSeconds[idx]).toFixed(1));
+        timeSpent = diff < 60 ? `${diff.toFixed(1)}s` : `${Math.floor(diff / 60)}m ${Math.floor(diff % 60)}s`;
+      }
+
+      if (idx === moves.length - 1 && timeoutSide) {
+        if (timeoutSide === 'w') currentWClk = '⊝ 0:00';
+        else currentBClk = '⊝ 0:00';
+      }
 
       // Book move detection: contiguous opening line until first non-book deviation
       let isBook = false;
@@ -1115,6 +1234,7 @@ export class GameReviewManager {
         winChance: currWhiteWinChance,
         wClk: currentWClk,
         bClk: currentBClk,
+        timeSpent,
         vi,
         en,
         bestMove: bestMoveCandidate ? {

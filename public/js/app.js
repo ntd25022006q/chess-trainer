@@ -216,10 +216,22 @@ class ChessTrainerApp {
     const btnStartWalkthrough = document.getElementById('btnStartWalkthrough');
     if (btnStartWalkthrough) {
       btnStartWalkthrough.addEventListener('click', () => {
+        this.hideGameEndModal();
         this.switchView('review-walkthrough');
         this.jumpToMove(1);
       });
     }
+
+    // End Game Modal Action Buttons (Image 4 Parity)
+    document.getElementById('btnCloseGameEndModal')?.addEventListener('click', () => {
+      this.hideGameEndModal();
+    });
+
+    document.getElementById('btnGameEndReview')?.addEventListener('click', () => {
+      this.hideGameEndModal();
+      this.switchView('review-walkthrough');
+      this.jumpToMove(1);
+    });
 
     // Back button (Screenshot 3 -> Screenshot 1)
     const btnBackToOverview = document.getElementById('btnBackToOverview');
@@ -578,7 +590,18 @@ class ChessTrainerApp {
       const diamondEl = document.getElementById(`${prefix}DiamondTag`);
 
       if (nameEl) nameEl.textContent = player.username;
-      if (eloEl) eloEl.textContent = player.rating ? `(${player.rating})` : '';
+      if (eloEl) {
+        let eloText = player.rating ? `(${player.rating})` : '';
+        if (player.ratingDiff !== undefined && player.ratingDiff !== '') {
+          const diffNum = parseInt(player.ratingDiff, 10);
+          if (!isNaN(diffNum)) {
+            const diffClass = diffNum > 0 ? 'diff-pos' : (diffNum < 0 ? 'diff-neg' : '');
+            const diffSign = diffNum > 0 ? '+' : '';
+            eloText += ` <span class="rating-diff ${diffClass}">${diffSign}${diffNum}</span>`;
+          }
+        }
+        eloEl.innerHTML = eloText;
+      }
 
       if (titleEl) {
         if (player.title && player.title.trim()) {
@@ -618,8 +641,29 @@ class ChessTrainerApp {
     const bClk = rev ? (rev.bClk || initClk) : initClk;
     const topClockEl = document.getElementById('blackClockTime');
     const bottomClockEl = document.getElementById('whiteClockTime');
-    if (topClockEl) topClockEl.textContent = isFlipped ? wClk : bClk;
-    if (bottomClockEl) bottomClockEl.textContent = isFlipped ? bClk : wClk;
+    const topClockBox = topClockEl ? topClockEl.closest('.player-clock-box') : null;
+    const bottomClockBox = bottomClockEl ? bottomClockEl.closest('.player-clock-box') : null;
+
+    const topClkVal = isFlipped ? wClk : bClk;
+    const bottomClkVal = isFlipped ? bClk : wClk;
+
+    if (topClockEl) topClockEl.textContent = topClkVal;
+    if (bottomClockEl) bottomClockEl.textContent = bottomClkVal;
+
+    if (topClockBox) {
+      if (topClkVal.includes('⊝')) {
+        topClockBox.classList.add('timeout-state');
+      } else {
+        topClockBox.classList.remove('timeout-state');
+      }
+    }
+    if (bottomClockBox) {
+      if (bottomClkVal.includes('⊝')) {
+        bottomClockBox.classList.add('timeout-state');
+      } else {
+        bottomClockBox.classList.remove('timeout-state');
+      }
+    }
 
     this.updateEvalBarDisplay();
   }
@@ -897,6 +941,7 @@ class ChessTrainerApp {
         winChance: commentary.winChance,
         wClk: commentary.wClk || '5:00',
         bClk: commentary.bClk || '5:00',
+        timeSpent: commentary.timeSpent || '',
         vi: commentary.vi,
         en: commentary.en,
         bestMove: commentary.bestMove,
@@ -955,7 +1000,8 @@ class ChessTrainerApp {
       wBtn.className = 'walkthrough-move-btn';
       wBtn.id = `moveBtn_${i + 1}`;
       const wBadge = (wRev && wRev.badge) ? `<span class="badge-tag ${wRev.badgeClass}">${wRev.badge}</span> ` : '';
-      wBtn.innerHTML = `${wBadge}<span>${formatSanWithSymbol(wMove.san, 'w')}</span>`;
+      const wTime = (wRev && wRev.timeSpent) ? `<span class="move-time-tag">${wRev.timeSpent}</span>` : '';
+      wBtn.innerHTML = `${wBadge}<span>${formatSanWithSymbol(wMove.san, 'w')}</span>${wTime}`;
       wBtn.onclick = () => {
         this.stopAutoPlay();
         this.jumpToMove(i + 1);
@@ -968,7 +1014,8 @@ class ChessTrainerApp {
         bBtn.className = 'walkthrough-move-btn';
         bBtn.id = `moveBtn_${i + 2}`;
         const bBadge = (bRev && bRev.badge) ? `<span class="badge-tag ${bRev.badgeClass}">${bRev.badge}</span> ` : '';
-        bBtn.innerHTML = `${bBadge}<span>${formatSanWithSymbol(bMove.san, 'b')}</span>`;
+        const bTime = (bRev && bRev.timeSpent) ? `<span class="move-time-tag">${bRev.timeSpent}</span>` : '';
+        bBtn.innerHTML = `${bBadge}<span>${formatSanWithSymbol(bMove.san, 'b')}</span>${bTime}`;
         bBtn.onclick = () => {
           this.stopAutoPlay();
           this.jumpToMove(i + 2);
@@ -979,7 +1026,7 @@ class ChessTrainerApp {
       listEl.appendChild(row);
     }
 
-    // Append actual game result row at bottom (Image 3 fix: dynamic result from headers/PGN)
+    // Append actual game result row at bottom (Image 3 & 4 fix: dynamic result from headers/PGN)
     let gameResult = '1/2-1/2';
     if (this.currentGame?.headers?.Result) {
       gameResult = this.currentGame.headers.Result;
@@ -987,11 +1034,13 @@ class ChessTrainerApp {
       const match = this.currentGame.pgn.match(/\[Result\s+"([^"]+)"\]/);
       if (match) gameResult = match[1];
     }
+    const term = this.currentGame?.headers?.Termination || this.currentGame?.termination || 'Game drawn';
+    const translatedTerm = this.translateTermination(term);
     const resultRow = document.createElement('div');
-    resultRow.className = 'walkthrough-move-row';
+    resultRow.className = 'walkthrough-move-row walkthrough-result-row';
     resultRow.style.fontWeight = '800';
     resultRow.style.color = '#81b64c';
-    resultRow.innerHTML = `<span></span><span>${gameResult}</span><span></span>`;
+    resultRow.innerHTML = `<span class="walkthrough-result-info" title="${translatedTerm}"><span class="result-text">${gameResult}</span> <span class="info-circle-icon">ⓘ</span></span>`;
     listEl.appendChild(resultRow);
   }
 
@@ -1064,6 +1113,17 @@ class ChessTrainerApp {
         const bottomClock = isFlipped ? (rev.bClk || initClk) : (rev.wClk || initClk);
         if (blackClockEl) blackClockEl.textContent = topClock;
         if (whiteClockEl) whiteClockEl.textContent = bottomClock;
+
+        const topClockBox = blackClockEl ? blackClockEl.closest('.player-clock-box') : null;
+        const bottomClockBox = whiteClockEl ? whiteClockEl.closest('.player-clock-box') : null;
+        if (topClockBox) {
+          if (topClock.includes('⊝')) topClockBox.classList.add('timeout-state');
+          else topClockBox.classList.remove('timeout-state');
+        }
+        if (bottomClockBox) {
+          if (bottomClock.includes('⊝')) bottomClockBox.classList.add('timeout-state');
+          else bottomClockBox.classList.remove('timeout-state');
+        }
 
         // Update Coach Speech Box in Walkthrough
         const pillTag = document.getElementById('walkthroughMovePill');
@@ -1155,6 +1215,10 @@ class ChessTrainerApp {
       const initClk = this.getInitialClock();
       if (whiteClockEl) whiteClockEl.textContent = initClk;
       if (blackClockEl) blackClockEl.textContent = initClk;
+      const topClockBox = blackClockEl ? blackClockEl.closest('.player-clock-box') : null;
+      const bottomClockBox = whiteClockEl ? whiteClockEl.closest('.player-clock-box') : null;
+      if (topClockBox) topClockBox.classList.remove('timeout-state');
+      if (bottomClockBox) bottomClockBox.classList.remove('timeout-state');
 
       const pillTag = document.getElementById('walkthroughMovePill');
       if (pillTag) pillTag.textContent = 'Ván đấu bắt đầu';
@@ -1199,10 +1263,12 @@ class ChessTrainerApp {
       if (normalBtns) normalBtns.classList.add('hidden');
       if (shareContainer) shareContainer.classList.remove('hidden');
       if (subActions) subActions.classList.remove('hidden');
+      this.showGameEndModal();
     } else {
       if (normalBtns) normalBtns.classList.remove('hidden');
       if (shareContainer) shareContainer.classList.add('hidden');
       if (subActions) subActions.classList.add('hidden');
+      this.hideGameEndModal();
     }
 
     // 5. Update Active Move in Table
@@ -1215,6 +1281,119 @@ class ChessTrainerApp {
 
     // 6. Update Walkthrough Advantage Chart Cursor
     this.walkthroughChart.draw(index);
+  }
+
+  translateTermination(term = '') {
+    const t = term.toLowerCase();
+    if (t.includes('timeout') && (t.includes('insufficient') || t.includes('material'))) {
+      return 'Do Hết Giờ Và Không Đủ Quân';
+    }
+    if (t.includes('timeout') || t.includes('won on time') || t.includes('time')) {
+      return 'Do Hết Thời Gian';
+    }
+    if (t.includes('checkmate')) {
+      return 'Do Chiếu Hết';
+    }
+    if (t.includes('resignation') || t.includes('resigned')) {
+      return 'Do Đối Thủ Đầu Hàng';
+    }
+    if (t.includes('stalemate')) {
+      return 'Hòa Do Hết Nước Đi (Stalemate)';
+    }
+    if (t.includes('repetition')) {
+      return 'Hòa Do Thế Cờ Lặp Lại 3 Lần';
+    }
+    if (t.includes('agreement')) {
+      return 'Hòa Do Hai Bên Thỏa Thuận';
+    }
+    if (t.includes('50-move') || t.includes('50 move')) {
+      return 'Hòa Theo Luật 50 Nước Đi';
+    }
+    if (t.includes('insufficient')) {
+      return 'Hòa Do Không Đủ Quân';
+    }
+    return term || 'Ván đấu đã kết thúc';
+  }
+
+  showGameEndModal() {
+    const modal = document.getElementById('gameEndModal');
+    if (!modal || !this.currentGame) return;
+
+    let gameResult = '1/2-1/2';
+    if (this.currentGame?.headers?.Result) {
+      gameResult = this.currentGame.headers.Result;
+    } else if (this.currentGame?.pgn) {
+      const match = this.currentGame.pgn.match(/\[Result\s+"([^"]+)"\]/);
+      if (match) gameResult = match[1];
+    }
+
+    const titleEl = document.getElementById('gameEndTitle');
+    const subtitleEl = document.getElementById('gameEndSubtitle');
+    const coachTextEl = document.getElementById('gameEndCoachText');
+    const greatEl = document.getElementById('gameEndGreatCount');
+    const bestEl = document.getElementById('gameEndBestCount');
+    const goodEl = document.getElementById('gameEndGoodCount');
+
+    // Title
+    if (titleEl) {
+      if (gameResult === '1/2-1/2') titleEl.textContent = 'Hòa cờ';
+      else if (gameResult === '1-0') titleEl.textContent = 'Trắng thắng';
+      else if (gameResult === '0-1') titleEl.textContent = 'Đen thắng';
+      else titleEl.textContent = 'Kết thúc ván cờ';
+    }
+
+    // Subtitle
+    const term = this.currentGame?.headers?.Termination || this.currentGame?.termination || '';
+    if (subtitleEl) {
+      const trans = this.translateTermination(term);
+      if (trans.includes('Hết Giờ Và Không Đủ Quân')) {
+        subtitleEl.innerHTML = 'Do Hết Giờ Và<br>Không Đủ Quân';
+      } else {
+        subtitleEl.textContent = trans;
+      }
+    }
+
+    // Determine perspective ('w' or 'b')
+    const isFlipped = (this.board && this.board.orientation === 'black');
+    const side = isFlipped ? 'b' : 'w';
+
+    // Coach Danny speech bubble
+    if (coachTextEl) {
+      if (gameResult === '1/2-1/2') {
+        const sideName = isFlipped ? 'Black' : 'White';
+        coachTextEl.textContent = `${sideName} took the draw, but had something better. See a full explanation with Game Review.`;
+      } else if ((gameResult === '1-0' && side === 'w') || (gameResult === '0-1' && side === 'b')) {
+        coachTextEl.textContent = 'You played great and earned the victory! See a full explanation with Game Review.';
+      } else {
+        coachTextEl.textContent = 'Good fight! See where the game turned with Game Review.';
+      }
+    }
+
+    // Breakdown counts for highlight cards
+    let greatCount = 0;
+    let bestCount = 0;
+    let goodCount = 0;
+
+    if (this.currentGame.breakdown) {
+      const greatItem = this.currentGame.breakdown.find(b => b.icon === '!');
+      const bestItem = this.currentGame.breakdown.find(b => b.icon === '★');
+      const goodItem = this.currentGame.breakdown.find(b => b.icon === '👍');
+
+      if (greatItem) greatCount = side === 'w' ? greatItem.w : greatItem.b;
+      if (bestItem) bestCount = side === 'w' ? bestItem.w : bestItem.b;
+      if (goodItem) goodCount = side === 'w' ? goodItem.w : goodItem.b;
+    }
+
+    if (greatEl) greatEl.textContent = greatCount;
+    if (bestEl) bestEl.textContent = bestCount;
+    if (goodEl) goodEl.textContent = goodCount;
+
+    modal.classList.remove('hidden');
+  }
+
+  hideGameEndModal() {
+    const modal = document.getElementById('gameEndModal');
+    if (modal) modal.classList.add('hidden');
   }
 
   async importFromUrl(url) {
@@ -1271,24 +1450,29 @@ class ChessTrainerApp {
           gameId: data.gameId || 'game',
           url,
           initialClock: analyzed.initialClock || '5:00',
+          headers: data.headers || {},
           players: {
             white: {
               username: whiteMeta.username || 'White',
               rating: whiteMeta.rating || 1500,
+              ratingDiff: whiteMeta.ratingDiff !== undefined ? whiteMeta.ratingDiff : '',
               title: whiteMeta.title || '',
               avatarUrl: whiteMeta.avatarUrl || '',
               countryName: whiteCountry,
               flag: whiteCountry,
-              diamond: whiteMeta.membershipCode === 'diamond'
+              diamond: whiteMeta.membershipCode === 'diamond',
+              result: whiteMeta.result || ''
             },
             black: {
               username: blackMeta.username || 'Black',
               rating: blackMeta.rating || 1500,
+              ratingDiff: blackMeta.ratingDiff !== undefined ? blackMeta.ratingDiff : '',
               title: blackMeta.title || '',
               avatarUrl: blackMeta.avatarUrl || '',
               countryName: blackCountry,
               flag: blackCountry,
-              diamond: blackMeta.membershipCode === 'diamond'
+              diamond: blackMeta.membershipCode === 'diamond',
+              result: blackMeta.result || ''
             }
           },
           accuracy: analyzed.accuracy,

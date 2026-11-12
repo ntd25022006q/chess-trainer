@@ -623,7 +623,57 @@ async function run() {
 
   console.log('✅ Image 8 Orange Reply Arrow & Image 4 4-Column Table Parity verified!');
 
-  console.log('=== ALL 19 TEST SECTIONS PASSED WITH 100% SUCCESS! ===');
+  console.log('--- 20. Testing End Game Modal, Sub-Second Tenths Clocks & Move Elapsed Time ---');
+  // 20.1 Test End Game Modal elements in index.html
+  const modalHome = await (await fetch('http://localhost:7777')).text();
+  const requiredModalElements = [
+    'id="gameEndModal"',
+    'id="gameEndTitle"',
+    'id="gameEndSubtitle"',
+    'id="gameEndCoachText"',
+    'id="gameEndGreatCount"',
+    'id="gameEndBestCount"',
+    'id="gameEndGoodCount"',
+    'id="btnGameEndReview"',
+    'id="btnCloseGameEndModal"'
+  ];
+  for (const el of requiredModalElements) {
+    if (!modalHome.includes(el)) {
+      throw new Error(`index.html missing End Game Modal element: ${el}`);
+    }
+  }
+
+  // 20.2 Test sub-second tenths clock precision (< 20s)
+  const testPgn = `1. e4 {[%clk 0:00:12.5]} 1... d5 {[%clk 0:00:01.1]}`;
+  const parsedClocks = GameReviewManager.parsePgnClocks(testPgn);
+  if (parsedClocks[0] !== '0:12.5' || parsedClocks[1] !== '0:01.1') {
+    throw new Error(`parsePgnClocks must preserve tenths of a second: expected ['0:12.5', '0:01.1'], got: ${JSON.stringify(parsedClocks)}`);
+  }
+
+  // 20.3 Test timeout detection at final move for game 173033536202
+  const finalPly = rxd5Analysis.moveCommentaries['116'];
+  if (!finalPly) {
+    throw new Error('Ply 116 (58... Kd4) commentary must exist!');
+  }
+  if (finalPly.wClk !== '⊝ 0:00') {
+    throw new Error(`Final move White clock must be '⊝ 0:00' due to timeout, got: ${finalPly.wClk}`);
+  }
+  if (finalPly.bClk !== '0:12.5') {
+    throw new Error(`Final move Black clock must be '0:12.5', got: ${finalPly.bClk}`);
+  }
+
+  // 20.4 Test move elapsed time calculation (0.1s and 0.3s)
+  if (!finalPly.timeSpent || finalPly.timeSpent !== '0.3s') {
+    throw new Error(`Ply 116 (58... Kd4) timeSpent must be '0.3s', got: ${finalPly.timeSpent}`);
+  }
+  const ply115 = rxd5Analysis.moveCommentaries['115'];
+  if (!ply115.timeSpent || ply115.timeSpent !== '0.1s') {
+    throw new Error(`Ply 115 (58. Qa6) timeSpent must be '0.1s', got: ${ply115.timeSpent}`);
+  }
+
+  console.log('✅ End Game Modal, Sub-Second Tenths Clocks & Move Elapsed Time verified!');
+
+  console.log('=== ALL 20 TEST SECTIONS PASSED WITH 100% SUCCESS! ===');
 }
 
 run().catch(err => {

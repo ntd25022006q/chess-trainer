@@ -285,6 +285,35 @@ body.dark-theme {
   display: flex;
   align-items: center;
   gap: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.player-clock-box.timeout-state {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.player-clock-box.timeout-state .clock-time {
+  color: #000000 !important;
+  font-weight: 800;
+}
+
+.player-clock-box.timeout-state .clock-icon {
+  display: none !important;
+}
+
+.rating-diff {
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.rating-diff.diff-pos {
+  color: #81b64c;
+}
+
+.rating-diff.diff-neg {
+  color: #ef4444;
 }
 
 .clock-icon {
@@ -1926,5 +1955,227 @@ body.dark-theme {
   font-weight: 800;
   color: #a8a39d;
   margin-left: 5px;
+}
+
+/* ==================== Game End Modal Overlay (Image 4 Parity) ==================== */
+.game-end-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  border-radius: 8px;
+}
+
+.game-end-modal-overlay.hidden {
+  display: none !important;
+}
+
+.game-end-modal-card {
+  position: relative;
+  background: #262421;
+  border-radius: 12px;
+  width: 380px;
+  max-width: 92%;
+  padding: 24px 22px 22px 22px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+  text-align: center;
+  animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPopIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #8b8987;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.modal-close-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.game-end-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
+}
+
+.game-end-subtitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #c3c1be;
+  line-height: 1.35;
+  margin-bottom: 20px;
+}
+
+.game-end-coach-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.game-end-coach-avatar img {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: block;
+}
+
+.game-end-speech-bubble {
+  position: relative;
+  background: #ffffff;
+  color: #262421;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 12px 14px;
+  border-radius: 10px;
+  flex: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.game-end-speech-bubble::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 20px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 8px solid #ffffff;
+}
+
+.game-end-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.game-end-stat-card {
+  background: #1e1c19;
+  border-radius: 8px;
+  padding: 10px 6px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-card-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.stat-card-badge-row .stat-badge-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.stat-card-badge-row .stat-badge-icon.badge-great {
+  background: #38bdf8;
+}
+
+.stat-card-badge-row .stat-badge-icon.badge-best {
+  background: #81b64c;
+}
+
+.stat-card-badge-row .stat-badge-icon.badge-good {
+  background: #81b64c;
+}
+
+.stat-card-badge-row .stat-number {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #c3c1be;
+  font-weight: 500;
+}
+
+.btn-game-end-review {
+  width: 100%;
+  background: #81b64c;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #588232;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-game-end-review:hover {
+  background: #95c85d;
+}
+
+.btn-game-end-review:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #588232;
+}
+
+.walkthrough-result-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: help;
+  color: #81b64c;
+  font-size: 14px;
+}
+
+.walkthrough-result-info .info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #81b64c;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
 }
 

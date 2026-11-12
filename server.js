@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(express.json());
@@ -83,6 +84,60 @@ app.post('/api/import-game', async (req, res) => {
         return res.status(400).json({ error: 'Không tìm thấy Game ID Chess.com trong URL' });
       }
       const gameId = match[1];
+
+      // Check local game JSON file if available
+      const localGameFile = path.join(__dirname, `game_${gameId}.json`);
+      if (fs.existsSync(localGameFile)) {
+        try {
+          const raw = fs.readFileSync(localGameFile, 'utf8');
+          const gObj = JSON.parse(raw);
+          const pgnMatch = gObj.pgn || '';
+          const resPayload = {
+            success: true,
+            source: 'Chess.com',
+            gameId,
+            headers: {
+              White: gObj.white?.username || 'White',
+              Black: gObj.black?.username || 'Black',
+              WhiteElo: gObj.white?.rating || 1500,
+              BlackElo: gObj.black?.rating || 1500,
+              Result: (pgnMatch.match(/\[Result\s+"([^"]+)"\]/) || [])[1] || '1/2-1/2',
+              Termination: (pgnMatch.match(/\[Termination\s+"([^"]+)"\]/) || [])[1] || 'Game drawn',
+              TimeControl: gObj.time_control || '180'
+            },
+            players: {
+              white: {
+                username: gObj.white?.username || 'White',
+                rating: gObj.white?.rating || 1500,
+                ratingDiff: gObj.white?.ratingDiff ?? -20,
+                title: gObj.white?.title || '',
+                avatarUrl: gObj.white?.avatarUrl || '',
+                countryCode: gObj.white?.countryCode || 'VN',
+                countryName: gObj.white?.countryName || 'Vietnam',
+                membershipCode: gObj.white?.membershipCode || 'basic',
+                result: gObj.white?.result || ''
+              },
+              black: {
+                username: gObj.black?.username || 'Black',
+                rating: gObj.black?.rating || 1500,
+                ratingDiff: gObj.black?.ratingDiff ?? 6,
+                title: gObj.black?.title || '',
+                avatarUrl: gObj.black?.avatarUrl || '',
+                countryCode: gObj.black?.countryCode || 'UN',
+                countryName: gObj.black?.countryName || 'United Nations',
+                membershipCode: gObj.black?.membershipCode || 'basic',
+                result: gObj.black?.result || ''
+              }
+            },
+            accuracies: gObj.accuracies || null,
+            pgn: gObj.pgn
+          };
+          importedGamesCache.set(trimmedUrl, resPayload);
+          return res.json(resPayload);
+        } catch (e) {
+          console.warn('Local game read warning:', e.message);
+        }
+      }
 
       // Query Chess.com callback to find players, avatars, titles, and date
       const cbRes = await fetch(`https://www.chess.com/callback/live/game/${gameId}`, {
