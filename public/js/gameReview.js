@@ -546,6 +546,18 @@ export class GameReviewManager {
     const SF_DEPTH = 14; // depth 14 = ~1-2s/position, still far superior to PeSTO; Chess.com uses ~18
     const sfResults = []; // sfResults[i] = eval for fens[i]
 
+    // Wait for engine ready (max 10s)
+    if (engine && !engine.isReady) {
+      await new Promise(resolve => {
+        const prevReady = engine.onReadyCallback;
+        engine.onReadyCallback = () => {
+          if (prevReady) prevReady();
+          resolve();
+        };
+        setTimeout(resolve, 10000); // fallback
+      });
+    }
+
     for (let i = 0; i <= totalMoves; i++) {
       if (onProgress) onProgress(i, totalMoves + 1);
       try {
