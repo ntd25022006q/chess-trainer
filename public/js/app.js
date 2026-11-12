@@ -92,7 +92,7 @@ class ChessTrainerApp {
         this.updateEvalBarDisplay(evalText, data.winChance);
 
         const lastMove = this.trialMoves[this.trialMoves.length - 1];
-        if (lastMove && !lastMove.isBook) {
+        if (lastMove && !lastMove.isBook && lastMove.classification?.type !== 'book') {
           const currWinChance = data.winChance || GameReviewManager.calculateWinChance(score);
           const movingSide = lastMove.color || 'w';
           const currWin = (movingSide === 'w') ? currWinChance : (100 - currWinChance);
@@ -979,12 +979,19 @@ class ChessTrainerApp {
       listEl.appendChild(row);
     }
 
-    // Append 0-1 Result row at bottom
+    // Append actual game result row at bottom (Image 3 fix: dynamic result from headers/PGN)
+    let gameResult = '1/2-1/2';
+    if (this.currentGame?.headers?.Result) {
+      gameResult = this.currentGame.headers.Result;
+    } else if (this.currentGame?.pgn) {
+      const match = this.currentGame.pgn.match(/\[Result\s+"([^"]+)"\]/);
+      if (match) gameResult = match[1];
+    }
     const resultRow = document.createElement('div');
     resultRow.className = 'walkthrough-move-row';
     resultRow.style.fontWeight = '800';
     resultRow.style.color = '#81b64c';
-    resultRow.innerHTML = '<span></span><span>0-1</span><span></span>';
+    resultRow.innerHTML = `<span></span><span>${gameResult}</span><span></span>`;
     listEl.appendChild(resultRow);
   }
 
@@ -1402,12 +1409,6 @@ class ChessTrainerApp {
       const move = this.chess.move({ from, to, promotion: promo });
       if (!move) return;
 
-      this.board.setPosition(this.chess);
-      this.board.setLastMove(move.from, move.to);
-
-      if (move.captured) chessAudio.playCapture();
-      else chessAudio.playMove();
-
       // 2. Tactical Evaluation for the trial move
       const cp = GameReviewManager.evaluateTactical(this.chess);
       const sign = cp >= 0 ? '+' : '';
@@ -1422,16 +1423,16 @@ class ChessTrainerApp {
       const isSacrifice = GameReviewManager.isTrueSacrifice(prevFen, move);
 
       // Book move detection: Check opening book theory
-      const isBook = (this.trialBaseIndex <= 8) && (
+      const isBook = (this.trialBaseIndex <= 10) && (
         GameReviewManager.isBookMove(prevFen, move.san) ||
-        (['d5', 'e5', 'c5', 'e6', 'c6', 'Nf6'].includes(move.san) && this.trialBaseIndex <= 2)
+        (['e4', 'd4', 'd5', 'e5', 'c4', 'c5', 'e6', 'c6', 'Nf3', 'Nc3', 'Nc6', 'Nf6', 'exd5', 'Qxd5', 'Bc4', 'Bb5', 'Be2', 'O-O'].includes(move.san) && this.trialBaseIndex <= 4)
       );
 
       let classification;
       if (isBook) {
         classification = {
           type: 'book',
-          label: 'Sách giáo khoa',
+          label: 'Chủ đề sách',
           icon: '📖',
           colorClass: 'badge-book'
         };
@@ -1447,47 +1448,64 @@ class ChessTrainerApp {
       }
 
       move.classification = classification;
+      move.isBook = isBook;
       move.prevWin = prevWin;
       move.prevFen = prevFen;
       move.color = movingSide;
       this.trialMoves.push(move);
 
-      // Square Highlights matching Chess.com (Image 2 & 9)
+      // Square Highlights matching Chess.com (Image 1 & 2)
+      let sqHighlight = {};
       if (classification.type === 'book') {
-        this.board.squareHighlights = {
+        sqHighlight = {
           [move.from]: 'rgba(218, 174, 110, 0.45)',
           [move.to]: 'rgba(218, 174, 110, 0.45)'
         };
       } else if (['blunder', 'mistake', 'miss'].includes(classification.type)) {
-        // Red highlight matching Chess.com Image 2 & 9
-        this.board.squareHighlights = {
+        sqHighlight = {
           [move.from]: 'rgba(235, 97, 80, 0.45)',
           [move.to]: 'rgba(235, 97, 80, 0.45)'
         };
       } else if (['brilliant', 'great'].includes(classification.type)) {
-        this.board.squareHighlights = {
+        sqHighlight = {
           [move.from]: 'rgba(56, 189, 248, 0.45)',
           [move.to]: 'rgba(56, 189, 248, 0.45)'
         };
       } else {
-        this.board.squareHighlights = {
+        sqHighlight = {
           [move.from]: 'rgba(129, 182, 76, 0.45)',
           [move.to]: 'rgba(129, 182, 76, 0.45)'
         };
       }
-      this.board.setSquareBadge(move.to, classification.icon, classification.colorClass);
+      this.board.squareHighlights = sqHighlight;
 
-      // Suggest arrows matching Chess.com (Image 1, 6 & 9):
+      // Arrows matching Chess.com (Image 1 parity):
+      // The move just played gets the green arrow; opponent reply only shown when appropriate
       const trialArrows = [];
       const turnChess = new Chess(this.chess.fen());
       const bestNextCandidate = GameReviewManager.getBestCandidateMove(turnChess);
 
       if (['blunder', 'mistake', 'miss'].includes(classification.type) && bestCandidate) {
         trialArrows.push({ from: bestCandidate.from, to: bestCandidate.to, color: '#81b64c', opacity: 0.95 });
-      } else if (bestNextCandidate && (isBook || bestNextCandidate.to !== move.to)) {
-        trialArrows.push({ from: bestNextCandidate.from, to: bestNextCandidate.to, color: '#38bdf8', opacity: 0.95 });
+        trialArrows.push({ from: move.from, to: move.to, color: '#ef4444', opacity: 0.9 });
+      } else if (classification.type === 'brilliant') {
+        trialArrows.push({ from: move.from, to: move.to, color: '#06b6d4', opacity: 0.95 });
+      } else {
+        // Book, Best, Good, Solid: Green arrow for the move played (Matches Image 1!)
+        trialArrows.push({ from: move.from, to: move.to, color: '#81b64c', opacity: 0.9 });
+        if (bestNextCandidate && !isBook && bestNextCandidate.to !== move.to) {
+          trialArrows.push({ from: bestNextCandidate.from, to: bestNextCandidate.to, color: '#38bdf8', opacity: 0.95 });
+        }
       }
-      this.board.setArrows(trialArrows);
+
+      // Single atomic board render (Image 1 parity, zero flicker)
+      this.board.updateMoveState({
+        chess: this.chess,
+        lastMove: { from: move.from, to: move.to },
+        squareBadge: { sq: move.to, badge: classification.icon, badgeClass: classification.colorClass },
+        squareHighlights: sqHighlight,
+        arrows: trialArrows
+      });
 
       // Formatted Eval string dynamically from Tactical Quiescence / Stockfish Engine
       const finalEvalText = evalText;

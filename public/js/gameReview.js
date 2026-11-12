@@ -6,7 +6,7 @@ import { Chess } from '../lib/chess.js';
 const PIECE_VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
 // Standard Opening Book for Instant Recognition
-const OPENING_BOOK = {
+export const OPENING_BOOK = {
   'e4': { vi: 'Là một nước đi như sách giáo khoa.', en: 'Controlling the center and opening lines for rapid development.' },
   'd4': { vi: 'Chiếm lĩnh hoàn toàn trung tâm với cặp tốt mạnh.', en: 'Controls the full center with the pawn duo.' },
   'd5': { vi: 'Phản công d5 trực diện vào trung tâm.', en: 'Strikes back directly at White\'s center.' },
@@ -262,9 +262,12 @@ export class GameReviewManager {
 
   // Detect opening book theory across main lines
   static isBookMove(fen, san) {
-    if (!fen || !san) return false;
-    const moves = this.getBookMoves(fen);
-    return moves.includes(san);
+    if (!san) return false;
+    if (fen) {
+      const moves = this.getBookMoves(fen);
+      if (moves && moves.includes(san)) return true;
+    }
+    return OPENING_BOOK[san] !== undefined;
   }
 
   // Authentic Multi-ply Alpha-Beta Quiescence Search with MVV-LVA move ordering
