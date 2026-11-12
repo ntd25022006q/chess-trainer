@@ -317,6 +317,16 @@ export class StockfishEngine {
       this.worker.postMessage('setoption name MultiPV value 1');
       this.worker.postMessage(`position fen ${fen}`);
       this.worker.postMessage(`go depth ${depth}`);
+
+      // Safety timeout: if Stockfish doesn't reply in 30s, resolve with fallback
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          this.worker.removeEventListener('message', tempHandler);
+          this.isReviewMode = false;
+          resolve(latestEval || { scoreWhite: 0, winChance: 50, bestMove: null, pv: '', isMate: false });
+        }
+      }, 30000);
     });
   }
 
