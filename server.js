@@ -105,11 +105,11 @@ app.post('/api/import-game', async (req, res) => {
               Termination: (pgnMatch.match(/\[Termination\s+"([^"]+)"\]/) || [])[1] || 'Game drawn',
               TimeControl: gObj.time_control || '180'
             },
-            players: {
+            players: gObj.players || {
               white: {
                 username: gObj.white?.username || 'White',
                 rating: gObj.white?.rating || 1500,
-                ratingDiff: gObj.white?.ratingDiff ?? -20,
+                ratingDiff: gObj.white?.ratingDiff ?? 0,
                 title: gObj.white?.title || '',
                 avatarUrl: gObj.white?.avatarUrl || '',
                 countryCode: gObj.white?.countryCode || 'VN',
@@ -120,7 +120,7 @@ app.post('/api/import-game', async (req, res) => {
               black: {
                 username: gObj.black?.username || 'Black',
                 rating: gObj.black?.rating || 1500,
-                ratingDiff: gObj.black?.ratingDiff ?? 6,
+                ratingDiff: gObj.black?.ratingDiff ?? 0,
                 title: gObj.black?.title || '',
                 avatarUrl: gObj.black?.avatarUrl || '',
                 countryCode: gObj.black?.countryCode || 'UN',
@@ -130,6 +130,10 @@ app.post('/api/import-game', async (req, res) => {
               }
             },
             accuracies: gObj.accuracies || null,
+            accuracy: gObj.accuracy || null,
+            performanceRating: gObj.performanceRating || null,
+            breakdown: gObj.breakdown || null,
+            phases: gObj.phases || null,
             pgn: gObj.pgn
           };
           importedGamesCache.set(trimmedUrl, resPayload);
@@ -163,30 +167,43 @@ app.post('/api/import-game', async (req, res) => {
       let whiteMeta = { username: whitePlayer, rating: pgnHeaders.WhiteElo || 1500, title: '', avatarUrl: '' };
       let blackMeta = { username: blackPlayer, rating: pgnHeaders.BlackElo || 1500, title: '', avatarUrl: '' };
 
+      const COUNTRY_CODE_MAP = {
+        'bulgaria': 'BG', 'uzbekistan': 'UZ', 'vietnam': 'VN', 'norway': 'NO',
+        'united states': 'US', 'russia': 'RU', 'ukraine': 'UA', 'india': 'IN',
+        'germany': 'DE', 'france': 'FR', 'china': 'CN', 'spain': 'ES',
+        'brazil': 'BR', 'canada': 'CA', 'united kingdom': 'GB', 'poland': 'PL',
+        'italy': 'IT', 'netherlands': 'NL', 'sweden': 'SE', 'armenia': 'AM',
+        'azerbaijan': 'AZ', 'israel': 'IL', 'kazakhstan': 'KZ', 'turkey': 'TR'
+      };
+
       if (cbData.players) {
         const top = cbData.players.top;
         const bottom = cbData.players.bottom;
         if (top) {
+          const cName = top.countryName || top.countryCode || '';
+          const cCode = top.countryCode || COUNTRY_CODE_MAP[cName.toLowerCase()] || '';
           const m = {
             username: top.username,
             rating: top.rating,
             title: top.chessTitle || '',
             avatarUrl: top.avatarUrl || '',
-            countryCode: top.countryCode || top.country || '',
-            countryName: top.countryName || top.countryCode || '',
+            countryCode: cCode,
+            countryName: cName,
             membershipCode: top.membershipCode || 'basic'
           };
           if (top.color === 'white') whiteMeta = m;
           else blackMeta = m;
         }
         if (bottom) {
+          const cName = bottom.countryName || bottom.countryCode || '';
+          const cCode = bottom.countryCode || COUNTRY_CODE_MAP[cName.toLowerCase()] || '';
           const m = {
             username: bottom.username,
             rating: bottom.rating,
             title: bottom.chessTitle || '',
             avatarUrl: bottom.avatarUrl || '',
-            countryCode: bottom.countryCode || bottom.country || '',
-            countryName: bottom.countryName || bottom.countryCode || '',
+            countryCode: cCode,
+            countryName: cName,
             membershipCode: bottom.membershipCode || 'basic'
           };
           if (bottom.color === 'white') whiteMeta = m;

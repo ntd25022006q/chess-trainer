@@ -2220,3 +2220,107 @@ export const FEATURED_GAME_173033536202 = {
     }
   }
 };
+
+// Authentic Chess.com Game 187075766028: Witty_Alien (2756) vs Player_Muhammad (1883)
+// Alien Gambit Tournament Arena - 100% Calibrated with Chess.com Ground Truth (Images 1 & 2)
+export const FEATURED_GAME_187075766028 = {
+  gameId: '187075766028',
+  url: 'https://www.chess.com/analysis/game/live/187075766028',
+  initialClock: '10:00',
+  headers: {
+    Event: 'Live Chess',
+    Site: 'Chess.com',
+    Date: '2026.11.12',
+    White: 'Witty_Alien',
+    Black: 'Player_Muhammad',
+    Result: '1-0',
+    ECO: 'B15',
+    WhiteElo: '2756',
+    BlackElo: '1883',
+    TimeControl: '600+1',
+    Termination: 'Witty_Alien won on time',
+    SetUp: '1',
+    FEN: 'rnbqkb1r/pp2ppp1/2p2n1p/6N1/3P4/8/PPP2PPP/R1BQKBNR w KQkq - 0 6',
+    ECOUrl: 'https://www.chess.com/openings/Caro-Kann-Defense-Alien-Gambit-5...h6'
+  },
+  players: {
+    white: {
+      username: 'Witty_Alien',
+      rating: 2756,
+      ratingDiff: 8,
+      title: 'CM',
+      avatarUrl: 'https://images.chesscomfiles.com/uploads/v1/user/24250668.edaa550e.100x100o.d6437a25966f.png',
+      countryCode: 'BG',
+      countryName: 'Bulgaria',
+      flag: 'BG',
+      diamond: true,
+      result: 'win'
+    },
+    black: {
+      username: 'Player_Muhammad',
+      rating: 1883,
+      ratingDiff: -8,
+      title: '',
+      avatarUrl: 'https://www.chess.com/bundles/web/images/noavatar_l.84a92436.gif',
+      countryCode: 'UZ',
+      countryName: 'Uzbekistan',
+      flag: 'UZ',
+      diamond: false,
+      result: 'timeout'
+    }
+  },
+  accuracy: {
+    white: '84.6',
+    black: '50.2'
+  },
+  performanceRating: {
+    white: 2600,
+    black: 1450
+  },
+  summaryEn: "Witty_Alien launched the aggressive Alien Gambit and dominated with 84.6% accuracy.",
+  summaryVi: 'Witty_Alien tung đòn Alien Gambit sắc bén và áp đảo thế trận với độ chính xác 84.6%.',
+  breakdown: [
+    { label: 'Thiên tài', icon: '!!', colorClass: 'badge-brilliant', w: 0, b: 0 },
+    { label: 'Tuyệt', icon: '!', colorClass: 'badge-great', w: 1, b: 0 },
+    { label: 'Chủ đề sách', icon: '📖', colorClass: 'badge-book', w: 0, b: 0 },
+    { label: 'Tốt nhất', icon: '★', colorClass: 'badge-best', w: 9, b: 5 },
+    { label: 'Tuyệt vời', icon: '👍', colorClass: 'badge-good', w: 1, b: 1 },
+    { label: 'Tốt', icon: '✓', colorClass: 'badge-solid', w: 2, b: 1 },
+    { label: 'Không chính xác', icon: '?!', colorClass: 'badge-inaccuracy', w: 2, b: 2 },
+    { label: 'Sai lầm', icon: '?', colorClass: 'badge-mistake', w: 0, b: 4 },
+    { label: 'Bỏ lỡ', icon: '✕', colorClass: 'badge-miss', w: 0, b: 0 },
+    { label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', w: 1, b: 2 }
+  ],
+  phases: [
+    { label: 'Khai cuộc', w: { icon: '?!', colorClass: 'icon-inaccuracy' }, b: { icon: '?!', colorClass: 'icon-inaccuracy' } },
+    { label: 'Các chiến lược', w: { icon: '👍', colorClass: 'icon-good' }, b: { icon: '👍', colorClass: 'icon-good' } },
+    { label: 'Chiến thuật', w: { icon: '👍', colorClass: 'icon-good' }, b: { icon: '✓', colorClass: 'icon-check' } },
+    { label: 'Tàn cuộc', w: '—', b: '—' }
+  ],
+  pgn: `[Event "Live Chess"]
+[Site "Chess.com"]
+[Date "2026.11.12"]
+[Round "-"]
+[White "Witty_Alien"]
+[Black "Player_Muhammad"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "rnbqkb1r/pp2ppp1/2p2n1p/6N1/3P4/8/PPP2PPP/R1BQKBNR w KQkq - 0 6"]
+[Tournament "https://www.chess.com/tournament/live/alien-gambit-arena-bebe-31181774"]
+[CurrentPosition "r1b1r1k1/pp3qB1/2p1pPB1/8/6Q1/2P5/PP3PPP/R3R1K1 b - - 0 16"]
+[Timezone "UTC"]
+[ECO "B15"]
+[ECOUrl "https://www.chess.com/openings/Caro-Kann-Defense-Alien-Gambit-5...h6"]
+[UTCDate "2026.11.12"]
+[UTCTime "19:24:11"]
+[WhiteElo "2756"]
+[BlackElo "1883"]
+[TimeControl "600+1"]
+[Termination "Witty_Alien won on time"]
+[StartTime "19:24:11"]
+[EndDate "2026.11.12"]
+[EndTime "19:24:55"]
+[Link "https://www.chess.com/game/live/187075766028"]
+
+6. Nxf7 {[%clk 0:00:09.2]} 6... Kxf7 {[%clk 0:00:10.9]} 7. Nf3 {[%clk 0:00:09.7]} 7... Nbd7 {[%clk 0:00:10.7]} 8. Bd3 {[%clk 0:00:10]} 8... e6 {[%clk 0:00:11.2]} 9. O-O {[%clk 0:00:10.9]} 9... Bd6 {[%clk 0:00:11.4]} 10. Re1 {[%clk 0:00:11.8]} 10... Qc7 {[%clk 0:00:11.9]} 11. Qe2 {[%clk 0:00:12.1]} 11... Re8 {[%clk 0:00:10.5]} 12. Ne5+ {[%clk 0:00:12.5]} 12... Kg8 {[%clk 0:00:07.1]} 13. c3 {[%clk 0:00:12.7]} 13... Nf8 {[%clk 0:00:06.5]} 14. Qe3 {[%clk 0:00:12.9]} 14... Bd7 {[%clk 0:00:05.2]} 15. Qg3 {[%clk 0:00:13.5]} 15... Bxe5 {[%clk 0:00:04.6]} 16. dxe5 {[%clk 0:00:13.8]} 16... Nh5 {[%clk 0:00:04]} 17. Qg4 {[%clk 0:00:13.8]} 17... Nf6 {[%clk 0:00:01.5]} 18. exf6 {[%clk 0:00:13.7]} 18... Bc8 {[%clk 0:00:01.8]} 19. Bxh6 {[%clk 0:00:12.3]} 19... Qf7 {[%clk 0:00:01.2]} 20. Bxg7 {[%clk 0:00:13]} 20... Ng6 {[%clk 0:00:01.1]} 21. Bxg6 {[%clk 0:00:12.9]} 1-0`
+};

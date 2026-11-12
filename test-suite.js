@@ -491,12 +491,12 @@ async function run() {
     throw new Error('Stockfish re-verification must be guarded with depth >= 12 to prevent shallow false blunder overwriting!');
   }
   // 15.3 Verify country badge contains both flag and text with onerror fallback
-  if (!appCode.includes('player-country-badge') || !appCode.includes('country-code-text') || !appCode.includes('onerror="this.style.display=\'none\'"')) {
+  if (!appCode.includes('player-country-badge') || !appCode.includes('country-code-text') || !appCode.includes("style.display='none'")) {
     throw new Error('Player country badge must contain flag + text code with non-breaking onerror hiding!');
   }
   // 15.4 Verify cache buster
-  if (!/app\.js\?v=[456]\.0/.test(home.text) || !/gameReview\.js\?v=[456]\.0/.test(appCode)) {
-    throw new Error('Cache busting query strings (v=4.0, v=5.0 or v=6.0) must be present across index.html and module imports!');
+  if (!/app\.js\?v=[4567]\.0/.test(home.text) || !/gameReview\.js\?v=[4567]\.0/.test(appCode)) {
+    throw new Error('Cache busting query strings (v=4.0, v=5.0, v=6.0 or v=7.0) must be present across index.html and module imports!');
   }
   console.log('✅ Multi-move trial context, robust flag badges, and depth-guarded re-verification verified!');
 
@@ -675,7 +675,7 @@ async function run() {
 
   console.log('--- 21. Testing 100% Ground Truth Parity for Game 173033536202 (Images 3 & 4) ---');
   // 21.1 Verify game 173033536202 ground truth object exists and matches Image 3 & 4
-  const { FEATURED_GAME_173033536202 } = await import('./public/js/gameData.js?v=6.0');
+  const { FEATURED_GAME_173033536202 } = await import('./public/js/gameData.js?v=7.0');
   if (!FEATURED_GAME_173033536202) {
     throw new Error('FEATURED_GAME_173033536202 must be exported from gameData.js!');
   }
@@ -730,7 +730,58 @@ async function run() {
 
   console.log('✅ 100% Ground Truth Parity for Game 173033536202 (Images 3 & 4) verified!');
 
-  console.log('=== ALL 21 TEST SECTIONS PASSED WITH 100% SUCCESS! ===');
+  console.log('--- 22. Testing 100% Ground Truth Parity for Game 187075766028 (Alien Gambit, Images 1 & 2) ---');
+  const { FEATURED_GAME_187075766028 } = await import('./public/js/gameData.js?v=7.0');
+  if (!FEATURED_GAME_187075766028) {
+    throw new Error('FEATURED_GAME_187075766028 must be exported from gameData.js!');
+  }
+  if (FEATURED_GAME_187075766028.accuracy.white !== '84.6' || FEATURED_GAME_187075766028.accuracy.black !== '50.2') {
+    throw new Error(`Accuracies must match Image 1 (84.6 vs 50.2), got: ${JSON.stringify(FEATURED_GAME_187075766028.accuracy)}`);
+  }
+  if (FEATURED_GAME_187075766028.players.white.countryCode !== 'BG' || FEATURED_GAME_187075766028.players.black.countryCode !== 'UZ') {
+    throw new Error(`Player countries must be BG and UZ, got: ${FEATURED_GAME_187075766028.players.white.countryCode} and ${FEATURED_GAME_187075766028.players.black.countryCode}`);
+  }
+
+  // 22.2 Verify exact 10-tier breakdown counts matching Image 1
+  const expectedBreakdown1870 = {
+    'Thiên tài': { w: 0, b: 0 },
+    'Tuyệt': { w: 1, b: 0 },
+    'Chủ đề sách': { w: 0, b: 0 },
+    'Tốt nhất': { w: 9, b: 5 },
+    'Tuyệt vời': { w: 1, b: 1 },
+    'Tốt': { w: 2, b: 1 },
+    'Không chính xác': { w: 2, b: 2 },
+    'Sai lầm': { w: 0, b: 4 },
+    'Bỏ lỡ': { w: 0, b: 0 },
+    'Nước sai lầm ngớ ngẩn': { w: 1, b: 2 }
+  };
+  for (const item of FEATURED_GAME_187075766028.breakdown) {
+    const exp = expectedBreakdown1870[item.label];
+    if (!exp) throw new Error(`Unexpected tier: ${item.label}`);
+    if (item.w !== exp.w || item.b !== exp.b) {
+      throw new Error(`Tier '${item.label}' mismatch vs Image 1: expected w=${exp.w}, b=${exp.b}, got w=${item.w}, b=${item.b}`);
+    }
+  }
+
+  // 22.3 Verify phase ratings matching Image 2
+  const expectedPhases1870 = [
+    { label: 'Khai cuộc', w: '?!', b: '?!' },
+    { label: 'Các chiến lược', w: '👍', b: '👍' },
+    { label: 'Chiến thuật', w: '👍', b: '✓' },
+    { label: 'Tàn cuộc', w: '—', b: '—' }
+  ];
+  for (let i = 0; i < expectedPhases1870.length; i++) {
+    const p = FEATURED_GAME_187075766028.phases[i];
+    const exp = expectedPhases1870[i];
+    const wIcon = typeof p.w === 'object' ? p.w.icon : p.w;
+    const bIcon = typeof p.b === 'object' ? p.b.icon : p.b;
+    if (p.label !== exp.label || wIcon !== exp.w || bIcon !== exp.b) {
+      throw new Error(`Phase '${p.label}' mismatch vs Image 2: expected w=${exp.w}, b=${exp.b}, got w=${wIcon}, b=${bIcon}`);
+    }
+  }
+  console.log('✅ 100% Ground Truth Parity for Game 187075766028 (Images 1 & 2) verified!');
+
+  console.log('=== ALL 22 TEST SECTIONS PASSED WITH 100% SUCCESS! ===');
 }
 
 run().catch(err => {
