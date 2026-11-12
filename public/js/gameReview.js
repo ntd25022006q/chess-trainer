@@ -374,6 +374,24 @@ export class GameReviewManager {
     return Math.max(1, Math.min(99, Math.round(50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1))));
   }
 
+  // 1b. Safe move helper — uses SAN to avoid verbose-object replay issues
+  // when chess instance position may differ from the original game position
+  static safeMove(chessInst, m) {
+    try {
+      const san = (typeof m === 'string') ? m : m.san;
+      const result = chessInst.move(san);
+      if (!result) throw new Error('null');
+      return result;
+    } catch (e) {
+      try {
+        const mv = (typeof m === 'object' && m) ? m : null;
+        if (mv) return chessInst.move({ from: mv.from, to: mv.to, promotion: mv.promotion || undefined });
+      } catch (_) {}
+      console.warn('[GameReview] safeMove failed:', e.message, typeof m === 'object' ? m?.san : m);
+      return null;
+    }
+  }
+
   // 2. Per-move accuracy using Chess.com exponential decay model
   // A = 103.1668 * exp(-0.04354 * winLoss) - 3.1669
   static calculateMoveAccuracy(winLoss) {
@@ -416,7 +434,13 @@ export class GameReviewManager {
       const clone = new Chess(fen);
       const movingColor = clone.turn();
       const oppColor = movingColor === 'w' ? 'b' : 'w';
-      const executed = clone.move(move);
+      // Safe move: use SAN or {from,to,promotion} to avoid verbose-object re-play issues
+      let executed = null;
+      try {
+        executed = clone.move(move.san);
+      } catch (_) {
+        try { executed = clone.move({ from: move.from, to: move.to, promotion: move.promotion || undefined }); } catch (_2) {}
+      }
       if (!executed) return false;
 
       // Check genuine sacrifice using attackers & defenders on destination square:
@@ -603,11 +627,25 @@ export class GameReviewManager {
     const clocks = this.parsePgnClocks(pgn);
     const totalMoves = moves.length;
 
+    // FIX: Extract the ACTUAL starting FEN from the PGN (handles [FEN][SetUp] headers)
+    // chess.loadPgn() respects FEN/SetUp tags; tempChess must start from the same position
+    const pgnHeaders = chess.header();
+    const startFen = pgnHeaders['FEN'] || null;
+
+    // Helper: safe move replay — uses SAN string (never raw verbose object) so it works
+    // regardless of which position the chess instance started from
+    const safeMove = (chessInst, m) => GameReviewManager.safeMove(chessInst, m);
+
     // Collect all FENs (before each move + final position)
-    const tempChess = new Chess();
+    // CRITICAL FIX: start tempChess from the same position as the loaded PGN
+    const tempChess = startFen ? new Chess(startFen) : new Chess();
     const fens = [tempChess.fen()]; // fen[0] = starting position
     for (const m of moves) {
-      tempChess.move(m);
+      const result = safeMove(tempChess, m);
+      if (!result) {
+        console.warn('[GameReview] FEN collection aborted at move', m.san);
+        break;
+      }
       fens.push(tempChess.fen());
     }
 
@@ -652,8 +690,8 @@ export class GameReviewManager {
     };
     const accuracies = { w: [], b: [] };
 
-    // Reset for iteration
-    const tempC2 = new Chess();
+    // Reset for iteration — CRITICAL FIX: start from same FEN as PGN
+    const tempC2 = startFen ? new Chess(startFen) : new Chess();
     let currentWClk = '5:00';
     let currentBClk = '5:00';
     let inBook = true;
@@ -752,12 +790,15 @@ export class GameReviewManager {
         const bmFrom = sfBestMoveUci.substring(0, 2);
         const bmTo = sfBestMoveUci.substring(2, 4);
         const bmPromo = sfBestMoveUci.length === 5 ? sfBestMoveUci[4] : undefined;
-        // Try to get SAN for best move
+        // Try to get SAN for best move — only pass {from, to, promotion}, never 'q' as default for non-promotions
         try {
           const tmpSan = new Chess(fens[idx]);
-          const executed = tmpSan.move({ from: bmFrom, to: bmTo, promotion: bmPromo || 'q' });
+          const moveArg = bmPromo ? { from: bmFrom, to: bmTo, promotion: bmPromo } : { from: bmFrom, to: bmTo };
+          const executed = tmpSan.move(moveArg);
           if (executed) bestMoveCandidate = { from: bmFrom, to: bmTo, san: executed.san, promotion: bmPromo };
-        } catch (e) {}
+        } catch (e) {
+          console.warn('[GameReview] bestMove conversion failed:', sfBestMoveUci, e.message);
+        }
       }
 
       // Sacrifice detection
@@ -848,21 +889,28 @@ export class GameReviewManager {
       const pvMoves = evalBefore.pv ? evalBefore.pv.trim().split(' ').slice(0, 4) : [];
       const continuation = [];
       if (bestMoveCandidate) continuation.push(bestMoveCandidate.san);
-      // Convert remaining PV UCI moves to SAN
+      // Convert remaining PV UCI moves to SAN — wrap each in try/catch for safety
       if (pvMoves.length > 1) {
         try {
           const pvChess = new Chess(fens[idx]);
-          pvChess.move({ from: pvMoves[0].substring(0, 2), to: pvMoves[0].substring(2, 4), promotion: pvMoves[0][4] || 'q' });
+          // First PV move (same as bestMove)
+          const pv0 = pvMoves[0];
+          const prom0 = pv0.length === 5 ? pv0[4] : undefined;
+          try { pvChess.move({ from: pv0.substring(0, 2), to: pv0.substring(2, 4), promotion: prom0 }); } catch (_) {}
           for (let p = 1; p < pvMoves.length && p < 4; p++) {
-            const pvMove = pvChess.move({ from: pvMoves[p].substring(0, 2), to: pvMoves[p].substring(2, 4), promotion: pvMoves[p][4] || 'q' });
-            if (pvMove) continuation.push(pvMove.san);
-            else break;
+            const pvUci = pvMoves[p];
+            const prom = pvUci.length === 5 ? pvUci[4] : undefined;
+            try {
+              const pvMove = pvChess.move({ from: pvUci.substring(0, 2), to: pvUci.substring(2, 4), promotion: prom });
+              if (pvMove) continuation.push(pvMove.san);
+              else break;
+            } catch (_) { break; }
           }
         } catch (e) {}
       }
 
-      // Advance tempC2
-      tempC2.move(m);
+      // Advance tempC2 — use safeMove to prevent crash on any edge case
+      safeMove(tempC2, m);
 
       moveCommentaries[ply] = {
         badge: classification.icon,
@@ -963,7 +1011,10 @@ export class GameReviewManager {
     const moves = chess.history({ verbose: true });
     const clocks = this.parsePgnClocks(pgn);
 
-    const tempChess = new Chess();
+    // FIX: Extract starting FEN if game doesn't start from initial position
+    const pgnHeaders = chess.header();
+    const startFen = pgnHeaders['FEN'] || null;
+    const tempChess = startFen ? new Chess(startFen) : new Chess();
     const moveCommentaries = {};
     const breakdownCounts = {
       w: { brilliant: 0, great: 0, book: 0, best: 0, good: 0, solid: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0 },
@@ -1087,9 +1138,9 @@ export class GameReviewManager {
         }
       }
 
-      // 2. Play the actual game move
+      // 2. Play the actual game move — use safeMove for maximum robustness
       const fenBeforeMove = tempChess.fen();
-      tempChess.move(m);
+      GameReviewManager.safeMove(tempChess, m);
 
       // Update clocks from PGN
       if (clocks[idx]) {

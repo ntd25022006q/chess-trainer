@@ -1,10 +1,10 @@
 import { Chess } from '../lib/chess.js';
-import { StockfishEngine } from './engine.js?v=5.0';
-import { ChessBoardUI } from './board.js?v=5.0';
-import { chessAudio } from './audio.js?v=5.0';
-import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202 } from './gameData.js?v=5.0';
-import { AdvantageChart } from './chart.js?v=5.0';
-import { GameReviewManager } from './gameReview.js?v=5.0';
+import { StockfishEngine } from './engine.js?v=6.0';
+import { ChessBoardUI } from './board.js?v=6.0';
+import { chessAudio } from './audio.js?v=6.0';
+import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202 } from './gameData.js?v=6.0';
+import { AdvantageChart } from './chart.js?v=6.0';
+import { GameReviewManager } from './gameReview.js?v=6.0';
 
 export function formatSanWithSymbol(san, color = 'w') {
   if (!san) return '';
@@ -125,27 +125,17 @@ class ChessTrainerApp {
     const pathMatch = window.location.pathname.match(/(?:game\/live|analysis\/game\/live)\/(\d+)/);
     if (pathMatch) {
       const gid = pathMatch[1];
-      if (gid === FEATURED_GAME_184609437048.gameId) {
-        this.loadGame(FEATURED_GAME_184609437048);
-      } else if (gid === FEATURED_GAME_173033536202.gameId) {
-        this.loadGame(FEATURED_GAME_173033536202);
-      } else {
-        this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
-      }
+      // Always use real Stockfish analysis — no hardcoded shortcuts
+      this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
     } else {
-      this.loadGame(FEATURED_GAME_173033536202);
+      // No specific game in URL — load the default featured game via real analysis
+      this.importFromUrl(`https://www.chess.com/game/live/${FEATURED_GAME_173033536202.gameId}`);
     }
 
     window.addEventListener('popstate', (e) => {
       const gid = e.state?.gameId;
       if (gid) {
-        if (gid === FEATURED_GAME_184609437048.gameId) {
-          this.loadGame(FEATURED_GAME_184609437048);
-        } else if (gid === FEATURED_GAME_173033536202.gameId) {
-          this.loadGame(FEATURED_GAME_173033536202);
-        } else {
-          this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
-        }
+        this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
       }
     });
   }
@@ -878,7 +868,11 @@ class ChessTrainerApp {
     const moves = this.chess.history({ verbose: true });
     this.gameMoves = moves;
 
-    const tempChess = new Chess();
+    // FIX: Extract starting FEN from PGN headers (handles [FEN][SetUp] custom positions)
+    // Both this.chess and tempChess must start from the same position
+    const pgHeaders = this.chess.header();
+    const pgStartFen = pgHeaders['FEN'] || null;
+    const tempChess = pgStartFen ? new Chess(pgStartFen) : new Chess();
     this.historyFens = [tempChess.fen()];
     this.moveReviews = [];
     const chartEvalPoints = [{ winChance: 52, color: '#81b64c' }];
@@ -919,7 +913,13 @@ class ChessTrainerApp {
         }
       }
 
-      tempChess.move(m);
+      // FIX: Use SAN string for move replay (never raw verbose object) to prevent
+      // "Invalid move" errors when chess instance position is out of sync
+      try {
+        tempChess.move(m.san);
+      } catch (e) {
+        console.warn('[loadGame] tempChess.move failed at', m.san, ':', e.message);
+      }
       this.historyFens.push(tempChess.fen());
 
       const colorMap = {
@@ -1421,81 +1421,74 @@ class ChessTrainerApp {
         throw new Error(data.error || 'Không thể tải ván đấu từ link này');
       }
 
-      // If it is the featured game 184609437048, use calibrated ground truth
-      if (data.gameId === '184609437048') {
-        this.loadGame(FEATURED_GAME_184609437048);
-      } else if (data.gameId === '173033536202') {
-        this.loadGame(FEATURED_GAME_173033536202);
-      } else {
-        // === STOCKFISH ASYNC ANALYSIS (Chess.com parity, depth 18) ===
-        // Show analysis progress bar during Stockfish evaluation
-        if (btn) { btn.textContent = '🔍 Stockfish đang phân tích...'; }
-        this._showAnalysisProgress(0, 1);
+      // === STOCKFISH ASYNC ANALYSIS — always dynamic, never hardcoded ===
+      // Show analysis progress bar during Stockfish evaluation
+      if (btn) { btn.textContent = '🔍 Stockfish đang phân tích...'; }
+      this._showAnalysisProgress(0, 1);
 
-        const analyzed = await GameReviewManager.analyzeGameWithStockfish(
-          data.pgn,
-          this.engine,
-          { accuracies: data.accuracies, players: data.players },
-          (done, total) => {
-            this._showAnalysisProgress(done, total);
-            if (btn) btn.textContent = `🔍 Phân tích nước ${done}/${total}...`;
-          }
-        );
-
-        this._hideAnalysisProgress();
-
-        if (!analyzed) {
-          throw new Error('Không thể phân tích ván cờ từ PGN này.');
+      const analyzed = await GameReviewManager.analyzeGameWithStockfish(
+        data.pgn,
+        this.engine,
+        { accuracies: data.accuracies, players: data.players },
+        (done, total) => {
+          this._showAnalysisProgress(done, total);
+          if (btn) btn.textContent = `🔍 Phân tích nước ${done}/${total}...`;
         }
+      );
 
-        const whiteMeta = data.players?.white || {};
-        const blackMeta = data.players?.black || {};
-        const whiteCountry = whiteMeta.countryName || whiteMeta.countryCode || whiteMeta.flag || '';
-        const blackCountry = blackMeta.countryName || blackMeta.countryCode || blackMeta.flag || '';
+      this._hideAnalysisProgress();
 
-        const dynamicGame = {
-          gameId: data.gameId || 'game',
-          url,
-          initialClock: analyzed.initialClock || '5:00',
-          headers: data.headers || {},
-          players: {
-            white: {
-              username: whiteMeta.username || 'White',
-              rating: whiteMeta.rating || 1500,
-              ratingDiff: whiteMeta.ratingDiff !== undefined ? whiteMeta.ratingDiff : '',
-              title: whiteMeta.title || '',
-              avatarUrl: whiteMeta.avatarUrl || '',
-              countryName: whiteCountry,
-              flag: whiteCountry,
-              diamond: whiteMeta.membershipCode === 'diamond',
-              result: whiteMeta.result || ''
-            },
-            black: {
-              username: blackMeta.username || 'Black',
-              rating: blackMeta.rating || 1500,
-              ratingDiff: blackMeta.ratingDiff !== undefined ? blackMeta.ratingDiff : '',
-              title: blackMeta.title || '',
-              avatarUrl: blackMeta.avatarUrl || '',
-              countryName: blackCountry,
-              flag: blackCountry,
-              diamond: blackMeta.membershipCode === 'diamond',
-              result: blackMeta.result || ''
-            }
-          },
-          accuracy: analyzed.accuracy,
-          performanceRating: analyzed.performanceRating,
-          summaryEn: analyzed.summaryEn,
-          summaryVi: analyzed.summaryVi,
-          breakdown: analyzed.breakdown,
-          phases: analyzed.phases,
-          pgn: data.pgn,
-          moveCommentaries: analyzed.moveCommentaries
-        };
-
-        this.loadGame(dynamicGame);
-        // Restore engine MultiPV after game review analysis
-        this.engine.restoreAfterReview();
+      if (!analyzed) {
+        throw new Error('Không thể phân tích ván cờ từ PGN này.');
       }
+
+      const whiteMeta = data.players?.white || {};
+      const blackMeta = data.players?.black || {};
+      const whiteCountry = whiteMeta.countryName || whiteMeta.countryCode || whiteMeta.flag || '';
+      const blackCountry = blackMeta.countryName || blackMeta.countryCode || blackMeta.flag || '';
+
+      const dynamicGame = {
+        gameId: data.gameId || 'game',
+        url,
+        initialClock: analyzed.initialClock || '5:00',
+        headers: data.headers || {},
+        players: {
+          white: {
+            username: whiteMeta.username || 'White',
+            rating: whiteMeta.rating || 1500,
+            ratingDiff: whiteMeta.ratingDiff !== undefined ? whiteMeta.ratingDiff : '',
+            title: whiteMeta.title || '',
+            avatarUrl: whiteMeta.avatarUrl || '',
+            countryName: whiteCountry,
+            flag: whiteCountry,
+            diamond: whiteMeta.membershipCode === 'diamond',
+            result: whiteMeta.result || ''
+          },
+          black: {
+            username: blackMeta.username || 'Black',
+            rating: blackMeta.rating || 1500,
+            ratingDiff: blackMeta.ratingDiff !== undefined ? blackMeta.ratingDiff : '',
+            title: blackMeta.title || '',
+            avatarUrl: blackMeta.avatarUrl || '',
+            countryName: blackCountry,
+            flag: blackCountry,
+            diamond: blackMeta.membershipCode === 'diamond',
+            result: blackMeta.result || ''
+          }
+        },
+        accuracy: analyzed.accuracy,
+        performanceRating: analyzed.performanceRating,
+        summaryEn: analyzed.summaryEn,
+        summaryVi: analyzed.summaryVi,
+        breakdown: analyzed.breakdown,
+        phases: analyzed.phases,
+        pgn: data.pgn,
+        moveCommentaries: analyzed.moveCommentaries
+      };
+
+      this.loadGame(dynamicGame);
+      // Restore engine MultiPV after game review analysis
+      this.engine.restoreAfterReview();
     } catch (err) {
       alert(`⚠️ Lỗi nạp link: ${err.message}`);
     } finally {
