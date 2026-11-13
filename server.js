@@ -161,7 +161,19 @@ app.post('/api/import-game', async (req, res) => {
       const whitePlayer = pgnHeaders.White;
       const blackPlayer = pgnHeaders.Black;
       const dateStr = pgnHeaders.Date; // e.g. "2026.11.07"
-      const [year, month] = dateStr ? dateStr.split('.') : [];
+      let year, month;
+      if (dateStr) {
+        const parts = dateStr.split(/[.\-/]/);
+        if (parts.length >= 2) {
+          year = parts[0];
+          month = parts[1].padStart(2, '0');
+        }
+      }
+      if (!year || !month) {
+        const dateObj = cbData.game.endTime ? new Date(cbData.game.endTime * 1000) : new Date();
+        year = String(dateObj.getUTCFullYear());
+        month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      }
 
       // Extract detailed player metadata
       let whiteMeta = { username: whitePlayer, rating: pgnHeaders.WhiteElo || 1500, title: '', avatarUrl: '' };
