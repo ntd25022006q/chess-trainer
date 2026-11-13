@@ -501,11 +501,13 @@ body.dark-theme {
   background-size: 92% 92%;
   background-repeat: no-repeat;
   background-position: center;
-  cursor: grab;
+  cursor: default;
   z-index: 2;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.chess-piece:active { cursor: grabbing; }
+.chess-piece:active { cursor: default; }
 
 .move-hint {
   width: 24%;

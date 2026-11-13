@@ -46,12 +46,12 @@ class ChessTrainerApp {
   }
 
   init() {
-    // 1. Initialize Board
+    // 1. Initialize Board (Read-only review board - no manual moves, only authentic game review analysis)
     const container = document.getElementById('boardContainer');
     this.board = new ChessBoardUI(container, {
       orientation: 'white',
-      onMoveAttempt: (from, to, promo) => this.handlePlayerMove(from, to, promo),
-      onSquareSelect: (sq) => this.handleSquareSelect(sq)
+      onMoveAttempt: null,
+      onSquareSelect: null
     });
 
     // 2. Initialize Advantage Charts with click callbacks
@@ -1598,6 +1598,8 @@ class ChessTrainerApp {
   }
 
   handlePlayerMove(from, to, promo = 'q') {
+    // Disabled interactive trial mode per user request: only show game analysis moves
+    if (true) return;
     try {
       if (!this.isTrialMode) {
         this.isTrialMode = true;

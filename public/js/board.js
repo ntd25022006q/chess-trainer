@@ -112,7 +112,7 @@ export class ChessBoardUI {
           pieceEl = document.createElement('div');
           pieceEl.className = 'chess-piece';
           pieceEl.dataset.square = sq;
-          pieceEl.draggable = true;
+          pieceEl.draggable = !!this.onMoveAttempt;
           sqEl.appendChild(pieceEl);
         }
         pieceEl.style.backgroundImage = `url('/assets/pieces/${pieceKey}.svg')`;
@@ -413,6 +413,10 @@ export class ChessBoardUI {
         if (handled) return;
       }
 
+      if (!this.onMoveAttempt) {
+        return;
+      }
+
       if (this.selectedSquare && this.selectedSquare !== clickedSq) {
         const isLegal = this.legalDestinations.some(d => d.to === clickedSq);
         if (isLegal && this.onMoveAttempt) {
@@ -431,6 +435,10 @@ export class ChessBoardUI {
     });
 
     this.gridEl.addEventListener('dragstart', (e) => {
+      if (!this.onMoveAttempt) {
+        e.preventDefault();
+        return;
+      }
       const pieceEl = e.target.closest('.chess-piece');
       if (!pieceEl) return;
       const sq = pieceEl.dataset.square;
@@ -443,6 +451,7 @@ export class ChessBoardUI {
 
     this.gridEl.addEventListener('drop', (e) => {
       e.preventDefault();
+      if (!this.onMoveAttempt) return;
       const sqEl = e.target.closest('.board-square');
       if (!sqEl || !this.draggedPiece) return;
       const targetSq = sqEl.dataset.square;
