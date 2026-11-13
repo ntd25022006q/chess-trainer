@@ -1,10 +1,10 @@
 import { Chess } from '../lib/chess.js';
-import { StockfishEngine } from './engine.js?v=7.0';
-import { ChessBoardUI } from './board.js?v=7.0';
-import { chessAudio } from './audio.js?v=7.0';
-import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=7.0';
-import { AdvantageChart } from './chart.js?v=7.0';
-import { GameReviewManager } from './gameReview.js?v=7.0';
+import { StockfishEngine } from './engine.js?v=8.0';
+import { ChessBoardUI } from './board.js?v=8.0';
+import { chessAudio } from './audio.js?v=8.0';
+import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=8.0';
+import { AdvantageChart } from './chart.js?v=8.0';
+import { GameReviewManager } from './gameReview.js?v=8.0';
 
 export function formatSanWithSymbol(san, color = 'w') {
   if (!san) return '';
@@ -121,35 +121,22 @@ class ChessTrainerApp {
       }
     };
 
-    // 5. Automatically load from URL path (e.g. /game/live/:gameId) or fallback to Featured Game
+    // 5. Automatically load from URL path (e.g. /game/live/:gameId) or fallback to real Stockfish analysis
     const pathMatch = window.location.pathname.match(/(?:game\/live|analysis\/game\/live)\/(\d+)/);
     if (pathMatch) {
       const gid = pathMatch[1];
-      if (gid === FEATURED_GAME_187075766028.gameId) {
-        this.loadGame(FEATURED_GAME_187075766028);
-      } else if (gid === FEATURED_GAME_184609437048.gameId) {
-        this.loadGame(FEATURED_GAME_184609437048);
-      } else if (gid === FEATURED_GAME_173033536202.gameId) {
-        this.loadGame(FEATURED_GAME_173033536202);
-      } else {
-        this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
-      }
+      // Always use real Stockfish analysis — never hardcoded shortcuts
+      this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
     } else {
-      this.loadGame(FEATURED_GAME_173033536202);
+      // Default: load with real analysis
+      this.importFromUrl(`https://www.chess.com/game/live/173033536202`);
     }
 
     window.addEventListener('popstate', (e) => {
       const gid = e.state?.gameId;
       if (gid) {
-        if (gid === FEATURED_GAME_187075766028.gameId) {
-          this.loadGame(FEATURED_GAME_187075766028);
-        } else if (gid === FEATURED_GAME_184609437048.gameId) {
-          this.loadGame(FEATURED_GAME_184609437048);
-        } else if (gid === FEATURED_GAME_173033536202.gameId) {
-          this.loadGame(FEATURED_GAME_173033536202);
-        } else {
-          this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
-        }
+        // Always use real Stockfish analysis on navigation
+        this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
       }
     });
   }
@@ -1468,21 +1455,8 @@ class ChessTrainerApp {
         throw new Error(data.error || 'Không thể tải ván đấu từ link này');
       }
 
-      // Check calibrated ground truth featured games first
-      if (data.gameId === '187075766028') {
-        this.loadGame(FEATURED_GAME_187075766028);
-        return;
-      }
-      if (data.gameId === '184609437048') {
-        this.loadGame(FEATURED_GAME_184609437048);
-        return;
-      }
-      if (data.gameId === '173033536202') {
-        this.loadGame(FEATURED_GAME_173033536202);
-        return;
-      }
-
       // === STOCKFISH ASYNC ANALYSIS — always dynamic, depth 18 ===
+      // No hardcoded shortcuts — every game goes through real Stockfish analysis
       // Show analysis progress bar during Stockfish evaluation
       if (btn) { btn.textContent = '🔍 Stockfish đang phân tích...'; }
       this._showAnalysisProgress(0, 1);
@@ -1505,8 +1479,8 @@ class ChessTrainerApp {
 
       const whiteMeta = data.players?.white || {};
       const blackMeta = data.players?.black || {};
-      const whiteCountry = whiteMeta.countryName || whiteMeta.countryCode || whiteMeta.flag || '';
-      const blackCountry = blackMeta.countryName || blackMeta.countryCode || blackMeta.flag || '';
+      const whiteCountry = whiteMeta.countryCode || whiteMeta.flag || whiteMeta.countryName || 'un';
+      const blackCountry = blackMeta.countryCode || blackMeta.flag || blackMeta.countryName || 'un';
 
       const dynamicGame = {
         gameId: data.gameId || 'game',

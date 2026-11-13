@@ -173,8 +173,37 @@ app.post('/api/import-game', async (req, res) => {
         'germany': 'DE', 'france': 'FR', 'china': 'CN', 'spain': 'ES',
         'brazil': 'BR', 'canada': 'CA', 'united kingdom': 'GB', 'poland': 'PL',
         'italy': 'IT', 'netherlands': 'NL', 'sweden': 'SE', 'armenia': 'AM',
-        'azerbaijan': 'AZ', 'israel': 'IL', 'kazakhstan': 'KZ', 'turkey': 'TR'
+        'azerbaijan': 'AZ', 'israel': 'IL', 'kazakhstan': 'KZ', 'turkey': 'TR',
+        'hungary': 'HU', 'romania': 'RO', 'czechia': 'CZ', 'argentina': 'AR',
+        'cuba': 'CU', 'serbia': 'RS', 'philippines': 'PH', 'indonesia': 'ID',
+        'georgia': 'GE', 'greece': 'GR', 'croatia': 'HR', 'austria': 'AT',
+        'switzerland': 'CH', 'belgium': 'BE', 'denmark': 'DK', 'finland': 'FI',
+        'portugal': 'PT', 'mexico': 'MX', 'colombia': 'CO', 'chile': 'CL',
+        'peru': 'PE', 'egypt': 'EG', 'south africa': 'ZA', 'australia': 'AU',
+        'new zealand': 'NZ', 'singapore': 'SG', 'malaysia': 'MY', 'thailand': 'TH',
+        'japan': 'JP', 'south korea': 'KR', 'mongolia': 'MN'
       };
+
+      async function resolveCountryIso(username, existingCode, existingName) {
+        if (existingCode && existingCode.trim().length === 2) return existingCode.trim().toUpperCase();
+        if (existingName && COUNTRY_CODE_MAP[existingName.toLowerCase().trim()]) {
+          return COUNTRY_CODE_MAP[existingName.toLowerCase().trim()];
+        }
+        if (!username) return 'UN';
+        try {
+          const pRes = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(username.toLowerCase().trim())}`, {
+            headers: { 'User-Agent': 'ChessTrainerBot/1.0' }
+          });
+          if (pRes.ok) {
+            const pData = await pRes.json();
+            if (pData.country) {
+              const iso = pData.country.split('/').pop().toUpperCase();
+              if (iso && iso.length === 2) return iso;
+            }
+          }
+        } catch (_) {}
+        return 'UN';
+      }
 
       if (cbData.players) {
         const top = cbData.players.top;
@@ -210,6 +239,16 @@ app.post('/api/import-game', async (req, res) => {
           else blackMeta = m;
         }
       }
+
+      // Always resolve universal country ISO code for both players via pub API or map
+      const [resolvedWhiteIso, resolvedBlackIso] = await Promise.all([
+        resolveCountryIso(whiteMeta.username, whiteMeta.countryCode, whiteMeta.countryName),
+        resolveCountryIso(blackMeta.username, blackMeta.countryCode, blackMeta.countryName)
+      ]);
+      whiteMeta.countryCode = resolvedWhiteIso;
+      whiteMeta.flag = resolvedWhiteIso;
+      blackMeta.countryCode = resolvedBlackIso;
+      blackMeta.flag = resolvedBlackIso;
 
       let fullPgn = '';
       let accuracies = null;

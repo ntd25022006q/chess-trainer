@@ -495,8 +495,8 @@ async function run() {
     throw new Error('Player country badge must contain flag + text code with non-breaking onerror hiding!');
   }
   // 15.4 Verify cache buster
-  if (!/app\.js\?v=[4567]\.0/.test(home.text) || !/gameReview\.js\?v=[4567]\.0/.test(appCode)) {
-    throw new Error('Cache busting query strings (v=4.0, v=5.0, v=6.0 or v=7.0) must be present across index.html and module imports!');
+  if (!/app\.js\?v=[45678]\.0/.test(home.text) || !/gameReview\.js\?v=[45678]\.0/.test(appCode)) {
+    throw new Error('Cache busting query strings (v=4.0, v=5.0, v=6.0, v=7.0 or v=8.0) must be present across index.html and module imports!');
   }
   console.log('✅ Multi-move trial context, robust flag badges, and depth-guarded re-verification verified!');
 
@@ -675,7 +675,7 @@ async function run() {
 
   console.log('--- 21. Testing 100% Ground Truth Parity for Game 173033536202 (Images 3 & 4) ---');
   // 21.1 Verify game 173033536202 ground truth object exists and matches Image 3 & 4
-  const { FEATURED_GAME_173033536202 } = await import('./public/js/gameData.js?v=7.0');
+  const { FEATURED_GAME_173033536202 } = await import('./public/js/gameData.js?v=8.0');
   if (!FEATURED_GAME_173033536202) {
     throw new Error('FEATURED_GAME_173033536202 must be exported from gameData.js!');
   }
@@ -731,7 +731,7 @@ async function run() {
   console.log('✅ 100% Ground Truth Parity for Game 173033536202 (Images 3 & 4) verified!');
 
   console.log('--- 22. Testing 100% Ground Truth Parity for Game 187075766028 (Alien Gambit, Images 1 & 2) ---');
-  const { FEATURED_GAME_187075766028 } = await import('./public/js/gameData.js?v=7.0');
+  const { FEATURED_GAME_187075766028 } = await import('./public/js/gameData.js?v=8.0');
   if (!FEATURED_GAME_187075766028) {
     throw new Error('FEATURED_GAME_187075766028 must be exported from gameData.js!');
   }
