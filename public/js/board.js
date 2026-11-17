@@ -115,7 +115,10 @@ export class ChessBoardUI {
           pieceEl.draggable = !!this.onMoveAttempt;
           sqEl.appendChild(pieceEl);
         }
-        pieceEl.style.backgroundImage = `url('/assets/pieces/${pieceKey}.svg')`;
+        if (pieceEl.dataset.pieceKey !== pieceKey) {
+          pieceEl.dataset.pieceKey = pieceKey;
+          pieceEl.style.backgroundImage = `url('/assets/pieces/${pieceKey}.svg')`;
+        }
       } else if (pieceEl) {
         pieceEl.remove();
       }

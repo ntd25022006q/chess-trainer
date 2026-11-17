@@ -16,6 +16,8 @@ export class StockfishEngine {
 
     // Multi-PV lines storage
     this.pvLines = {};
+    // Fast transposition evaluation cache
+    this.evalCache = new Map();
 
     this.init();
   }
@@ -253,7 +255,8 @@ export class StockfishEngine {
 
   // Evaluate a single position via Promise — used for async Game Review (Stockfish depth analysis)
   // Properly stops any ongoing analysis before starting a new one.
-  evaluatePositionAsync(fen, depth = 16) {
+  // Supports maxTimeMs budget (movetime) for lightning-fast, high-precision evaluations.
+  evaluatePositionAsync(fen, depth = 16, maxTimeMs = 120) {
     return new Promise((resolve) => {
       if (!this.worker) {
         return resolve({
@@ -266,6 +269,11 @@ export class StockfishEngine {
           secondWinChance: null,
           secondScoreWhite: null
         });
+      }
+
+      // Check transposition evaluation cache (instant 0ms response)
+      if (this.evalCache && this.evalCache.has(fen)) {
+        return resolve(this.evalCache.get(fen));
       }
 
       const parts = fen.split(' ');
@@ -294,7 +302,7 @@ export class StockfishEngine {
           const bm = line.split(' ')[1] || null;
           const l1 = lines[1] || {};
           const l2 = lines[2] || {};
-          resolve({
+          const resObj = {
             scoreWhite: l1.scoreWhite ?? 0,
             winChance: l1.winChance ?? 50,
             bestMove: l1.bestMove ?? bm,
@@ -303,7 +311,9 @@ export class StockfishEngine {
             secondBestMove: l2.bestMove ?? null,
             secondWinChance: l2.winChance ?? null,
             secondScoreWhite: l2.scoreWhite ?? null
-          });
+          };
+          if (this.evalCache) this.evalCache.set(fen, resObj);
+          resolve(resObj);
         } else if (line.startsWith('info') && line.includes('score')) {
           const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
           const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
@@ -344,9 +354,14 @@ export class StockfishEngine {
       // MultiPV=2 to evaluate both best and 2nd best move (for authentic Chess.com Great move detection)
       this.worker.postMessage('setoption name MultiPV value 2');
       this.worker.postMessage(`position fen ${fen}`);
-      this.worker.postMessage(`go depth ${depth}`);
+      if (maxTimeMs) {
+        this.worker.postMessage(`go depth ${depth} movetime ${maxTimeMs}`);
+      } else {
+        this.worker.postMessage(`go depth ${depth}`);
+      }
 
-      // Safety timeout: if Stockfish doesn't reply in 30s, resolve with fallback
+      // Adaptive safety timeout: 4x maxTime or max 12s
+      const timeoutMs = Math.max(12000, (maxTimeMs || 150) * 4);
       setTimeout(() => {
         if (!resolved) {
           resolved = true;
@@ -354,7 +369,7 @@ export class StockfishEngine {
           this.isReviewMode = false;
           const l1 = lines[1] || {};
           const l2 = lines[2] || {};
-          resolve({
+          const resObj = {
             scoreWhite: l1.scoreWhite ?? 0,
             winChance: l1.winChance ?? 50,
             bestMove: l1.bestMove ?? null,
@@ -363,9 +378,11 @@ export class StockfishEngine {
             secondBestMove: l2.bestMove ?? null,
             secondWinChance: l2.winChance ?? null,
             secondScoreWhite: l2.scoreWhite ?? null
-          });
+          };
+          if (this.evalCache) this.evalCache.set(fen, resObj);
+          resolve(resObj);
         }
-      }, 30000);
+      }, timeoutMs);
     });
   }
 

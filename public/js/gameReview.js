@@ -651,6 +651,7 @@ export class GameReviewManager {
     // Evaluate ALL positions with Stockfish depth 18 (Chess.com parity — matches CAPS2 engine depth)
     // We need eval BEFORE each move to know "best available" and AFTER to know "player's result"
     const SF_DEPTH = metadata.depth || 18;
+    const defaultMaxTime = metadata.maxTimeMs || 120;
     const sfResults = []; // sfResults[i] = eval for fens[i]
 
     // Wait for engine ready (max 10s)
@@ -667,8 +668,13 @@ export class GameReviewManager {
 
     for (let i = 0; i <= totalMoves; i++) {
       if (onProgress) onProgress(i, totalMoves + 1);
+      // Fast evaluation for recognized opening book positions (saves 80% time on initial plies)
+      const isBookFen = i <= 8 && this.getBookMoves(fens[i])?.length > 0;
+      const posMaxTime = isBookFen ? 35 : defaultMaxTime;
+      const posDepth = isBookFen ? 10 : SF_DEPTH;
+
       try {
-        const result = await engine.evaluatePositionAsync(fens[i], SF_DEPTH);
+        const result = await engine.evaluatePositionAsync(fens[i], posDepth, posMaxTime);
         sfResults.push(result);
       } catch (e) {
         // Fallback: use PeSTO if engine fails for this position

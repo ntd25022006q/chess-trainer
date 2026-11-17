@@ -40,10 +40,12 @@ export class AdvantageChart {
     }
     if (!this.canvas || !this.ctx || !this.evalData || this.evalData.length === 0) return;
 
-    // Use parent container width safely
+    // Use parent container width safely - avoid GPU buffer reallocation if size unchanged
     const width = this.canvas.parentElement ? (this.canvas.parentElement.clientWidth || 360) : 360;
     const height = this.canvas.height || 76;
-    this.canvas.width = width;
+    if (this.canvas.width !== width) {
+      this.canvas.width = width;
+    }
 
     const ctx = this.ctx;
     ctx.clearRect(0, 0, width, height);
