@@ -51,6 +51,7 @@ export class StockfishEngine {
   restoreAfterReview() {
     this.isAnalyzing = false;
     this.isReviewMode = false;
+    this._reviewMultiPv = null;
     this.pvLines = {};
     this.sendCommand('ucinewgame');
     this.setMultiPv(this.multiPvCount); // restore to configured MultiPV (default 3)
@@ -271,9 +272,10 @@ export class StockfishEngine {
         });
       }
 
-      // Check transposition evaluation cache (instant 0ms response)
-      if (this.evalCache && this.evalCache.has(fen)) {
-        return resolve(this.evalCache.get(fen));
+      // Check transposition evaluation cache with normalized key (instant 0ms response)
+      const fenKey = fen.split(' ').slice(0, 4).join(' ');
+      if (this.evalCache && this.evalCache.has(fenKey)) {
+        return resolve(this.evalCache.get(fenKey));
       }
 
       const parts = fen.split(' ');
@@ -312,7 +314,7 @@ export class StockfishEngine {
             secondWinChance: l2.winChance ?? null,
             secondScoreWhite: l2.scoreWhite ?? null
           };
-          if (this.evalCache) this.evalCache.set(fen, resObj);
+          if (this.evalCache) this.evalCache.set(fenKey, resObj);
           resolve(resObj);
         } else if (line.startsWith('info') && line.includes('score')) {
           const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
@@ -352,7 +354,10 @@ export class StockfishEngine {
 
       this.worker.addEventListener('message', tempHandler);
       // MultiPV=2 to evaluate both best and 2nd best move (for authentic Chess.com Great move detection)
-      this.worker.postMessage('setoption name MultiPV value 2');
+      if (this._reviewMultiPv !== 2) {
+        this.worker.postMessage('setoption name MultiPV value 2');
+        this._reviewMultiPv = 2;
+      }
       this.worker.postMessage(`position fen ${fen}`);
       if (maxTimeMs) {
         this.worker.postMessage(`go depth ${depth} movetime ${maxTimeMs}`);

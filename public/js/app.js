@@ -159,14 +159,6 @@ class ChessTrainerApp {
       });
     }
 
-    // Chess.com Published Data API Quick Actions
-    document.getElementById('btnDailyPuzzle')?.addEventListener('click', () => this.showDailyPuzzleModal());
-    document.getElementById('btnLeaderboard')?.addEventListener('click', () => this.showLeaderboardModal());
-    document.getElementById('btnPubModalClose')?.addEventListener('click', () => this.hidePubModal());
-    document.getElementById('pubApiModal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'pubApiModal') this.hidePubModal();
-    });
-
     // Top Navigation Action Buttons
     const onFlip = (e) => {
       if (e) {
@@ -720,27 +712,47 @@ class ChessTrainerApp {
     this.updatePlayerCardDisplay();
   }
 
-  // === STOCKFISH ANALYSIS PROGRESS BAR ===
+  // === STOCKFISH ANALYSIS PROGRESS BAR (Authentic Chess.com 1:1 Design) ===
   _showAnalysisProgress(done, total) {
     let overlay = document.getElementById('sfAnalysisOverlay');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'sfAnalysisOverlay';
       overlay.style.cssText = `
-        position:fixed;top:0;left:0;width:100%;height:100%;
-        background:rgba(0,0,0,0.75);z-index:9999;
-        display:flex;flex-direction:column;align-items:center;justify-content:center;
-        font-family:inherit;color:#fff;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(18, 17, 15, 0.88);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 99999;
+        display: flex; align-items: center; justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Helvetica, Arial, sans-serif;
+        color: #fff;
       `;
       overlay.innerHTML = `
-        <div style="text-align:center;max-width:380px;padding:32px 24px;background:#1a1a2e;border-radius:16px;border:1px solid #333;">
-          <div style="font-size:2rem;margin-bottom:12px;">♟️</div>
-          <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">Stockfish đang phân tích ván đấu</div>
-          <div style="font-size:0.85rem;color:#aaa;margin-bottom:16px;">Depth 18 — Kết quả chuẩn xác như Chess.com</div>
-          <div style="background:#2a2a3e;border-radius:8px;height:10px;overflow:hidden;margin-bottom:12px;">
-            <div id="sfProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#4ade80,#06b6d4);border-radius:8px;transition:width 0.3s ease;"></div>
+        <div class="sf-review-modal-card" style="
+          text-align: center; width: 380px; max-width: 92vw;
+          padding: 32px 28px 24px;
+          background: #262522;
+          border-radius: 12px;
+          border: 1px solid #3d3a34;
+          box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
+        ">
+          <div style="margin-bottom: 16px; display: flex; justify-content: center;">
+            <img src="/assets/chesscom-logo.svg" alt="Chess.com" width="46" height="46" style="animation: chessGlow 2s ease-in-out infinite;">
           </div>
-          <div id="sfProgressText" style="font-size:0.85rem;color:#81b64c;">Đang khởi động engine...</div>
+          <div style="font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px; margin-bottom: 6px;">Đang xem lại ván đấu...</div>
+          <div style="font-size: 13px; color: #9e9c98; margin-bottom: 22px; font-weight: 500;">Stockfish 16 NNUE • Đánh giá độ chính xác CAPS2</div>
+          <div style="background: #1b1917; border: 1px solid #312e2b; border-radius: 4px; height: 8px; overflow: hidden; margin-bottom: 12px;">
+            <div id="sfProgressBar" style="height: 100%; width: 0%; background: #81b64c; border-radius: 4px; transition: width 0.12s linear;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; padding: 0 2px;">
+            <span id="sfProgressText" style="color: #c3c2c1;">Đang khởi động engine...</span>
+            <span id="sfProgressPct" style="color: #81b64c; font-family: monospace; font-size: 13px;">0%</span>
+          </div>
+          <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid #312e2b; font-size: 11px; color: #73716d; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #81b64c;"></span>
+            <span>Phân tích tốc độ cao thời gian thực</span>
+          </div>
         </div>
       `;
       document.body.appendChild(overlay);
@@ -748,9 +760,17 @@ class ChessTrainerApp {
     overlay.style.display = 'flex';
     const bar = document.getElementById('sfProgressBar');
     const txt = document.getElementById('sfProgressText');
-    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const pctEl = document.getElementById('sfProgressPct');
+    const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
     if (bar) bar.style.width = `${pct}%`;
-    if (txt) txt.textContent = total > 1 ? `Nước ${done}/${total} (${pct}%)` : 'Đang khởi động engine...';
+    if (pctEl) pctEl.textContent = `${pct}%`;
+    if (txt) {
+      if (total > 1) {
+        txt.textContent = `Nước ${done}/${total}`;
+      } else {
+        txt.textContent = 'Đang khởi động engine...';
+      }
+    }
   }
 
   _hideAnalysisProgress() {

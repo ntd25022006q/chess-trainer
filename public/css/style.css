@@ -1898,11 +1898,11 @@ body.dark-theme {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  border: 1px solid #38bdf8;
-  border-radius: 8px;
+  background: #262522;
+  border: 1px solid #3d3a34;
+  border-radius: 6px;
   padding: 8px 12px;
-  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .trial-mode-left {
@@ -1914,8 +1914,8 @@ body.dark-theme {
 .trial-pill {
   font-size: 11px;
   font-weight: 700;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.15);
+  color: #81b64c;
+  background: rgba(129, 182, 76, 0.15);
   padding: 3px 8px;
   border-radius: 4px;
 }
@@ -1928,10 +1928,10 @@ body.dark-theme {
 }
 
 .btn-return-game {
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
+  background: #363430;
+  color: #e5e5e5;
+  border: 1px solid #45423c;
+  border-radius: 4px;
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 700;
@@ -1940,7 +1940,9 @@ body.dark-theme {
 }
 
 .btn-return-game:hover {
-  background: #2563eb;
+  background: #403d39;
+  border-color: #81b64c;
+  color: #fff;
   transform: translateY(-1px);
 }
 
@@ -2329,5 +2331,21 @@ body.dark-theme {
   font-family: var(--font-mono);
   color: #eab308;
   font-weight: 700;
+}
+
+/* Authentic Chess.com Stockfish Review Overlay */
+@keyframes chessGlow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 2px 6px rgba(129, 182, 76, 0.3));
+  }
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 14px rgba(129, 182, 76, 0.6));
+  }
+}
+
+.sf-review-modal-card {
+  animation: fadeIn 0.15s ease-out;
 }
 

@@ -651,8 +651,9 @@ export class GameReviewManager {
     // Evaluate ALL positions with Stockfish depth 18 (Chess.com parity — matches CAPS2 engine depth)
     // We need eval BEFORE each move to know "best available" and AFTER to know "player's result"
     const SF_DEPTH = metadata.depth || 18;
-    const defaultMaxTime = metadata.maxTimeMs || 120;
+    const defaultMaxTime = metadata.maxTimeMs || 70;
     const sfResults = []; // sfResults[i] = eval for fens[i]
+    const STARTING_FEN_CLEAN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
 
     // Wait for engine ready (max 10s)
     if (engine && !engine.isReady) {
@@ -668,10 +669,59 @@ export class GameReviewManager {
 
     for (let i = 0; i <= totalMoves; i++) {
       if (onProgress) onProgress(i, totalMoves + 1);
-      // Fast evaluation for recognized opening book positions (saves 80% time on initial plies)
-      const isBookFen = i <= 8 && this.getBookMoves(fens[i])?.length > 0;
-      const posMaxTime = isBookFen ? 35 : defaultMaxTime;
-      const posDepth = isBookFen ? 10 : SF_DEPTH;
+
+      // Instant 0ms shortcut for standard initial starting position
+      if (i === 0 && fens[0].startsWith(STARTING_FEN_CLEAN)) {
+        sfResults.push({
+          scoreWhite: 25,
+          winChance: 50,
+          bestMove: 'e2e4',
+          pv: 'e2e4 e7e5',
+          isMate: false,
+          secondBestMove: 'd2d4',
+          secondWinChance: 50,
+          secondScoreWhite: 20
+        });
+        continue;
+      }
+
+      // Instant 0ms check for terminal checkmate position
+      if (i === totalMoves) {
+        try {
+          const lastPos = new Chess(fens[i]);
+          if (lastPos.in_checkmate()) {
+            const sideMated = lastPos.turn(); // 'w' or 'b'
+            sfResults.push({
+              scoreWhite: sideMated === 'b' ? 30000 : -30000,
+              winChance: sideMated === 'b' ? 100 : 0,
+              bestMove: null,
+              pv: '',
+              isMate: true,
+              mateInWhite: sideMated === 'b' ? 1 : -1,
+              secondBestMove: null,
+              secondWinChance: null,
+              secondScoreWhite: null
+            });
+            continue;
+          }
+        } catch (_) {}
+      }
+
+      // Adaptive depth & time budget for ultra-fast, high-precision review
+      const isBookFen = i <= 12 && this.getBookMoves(fens[i])?.length > 0;
+      const prevResult = i > 0 ? sfResults[i - 1] : null;
+      const isLopsided = prevResult && Math.abs(prevResult.scoreWhite) > 700;
+
+      let posMaxTime = defaultMaxTime;
+      let posDepth = SF_DEPTH;
+
+      if (isBookFen) {
+        posMaxTime = 25;
+        posDepth = 10;
+      } else if (isLopsided) {
+        posMaxTime = 40;
+        posDepth = 14;
+      }
 
       try {
         const result = await engine.evaluatePositionAsync(fens[i], posDepth, posMaxTime);

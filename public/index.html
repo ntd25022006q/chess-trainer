@@ -30,8 +30,6 @@
       </span>
       <input type="text" id="topGameUrlInput" class="nav-url-input" value="https://www.chess.com/game/live/184609437048" placeholder="Dán link ván cờ hoặc tên kỳ thủ (hikaru, magnuscarlsen)...">
       <button id="btnTopAnalyze" class="btn-url-analyze">Phân tích</button>
-      <button id="btnDailyPuzzle" class="btn-url-secondary" title="Xem câu đố hàng ngày Chess.com">🧩 Câu đố</button>
-      <button id="btnLeaderboard" class="btn-url-secondary" title="Xem Top 50 Chess.com">🏆 BXH</button>
     </div>
   </header>
 
@@ -380,19 +378,6 @@
     </aside>
   </main>
 
-  <!-- Published Data API Modal (Puzzle / Leaderboards) -->
-  <div id="pubApiModal" class="pub-modal-backdrop hidden">
-    <div class="pub-modal-content">
-      <div class="pub-modal-header">
-        <h3 id="pubModalTitle">Thông tin Chess.com</h3>
-        <button id="btnPubModalClose" class="btn-close-modal" title="Đóng">✕</button>
-      </div>
-      <div id="pubModalBody" class="pub-modal-body">
-        <p>Đang tải dữ liệu từ Chess.com...</p>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="/js/app.js?v=9.2"></script>
+  <script type="module" src="/js/app.js?v=9.4"></script>
 </body>
 </html>
