@@ -519,22 +519,22 @@ export class GameReviewManager {
       return { type: 'mistake', label: 'Sai lầm', icon: '?', colorClass: 'badge-mistake', color: '#f97316' };
     }
 
-    // 6. Inaccuracy (?!): 5% - 10% drop (suboptimal but not critical)
-    if (winDrop >= 5.0) {
+    // 6. Inaccuracy (?!): 4.0% - 10% drop (suboptimal but not critical)
+    if (winDrop >= 4.0) {
       return { type: 'inaccuracy', label: 'Không chính xác', icon: '?!', colorClass: 'badge-inaccuracy', color: '#eab308' };
     }
 
-    // 7. Best (★): Exact best move with <= 2% drop
-    if (isPlayerBest && winDrop <= 2.0) {
+    // 7. Best (★): Exact best engine move with minimal drop (<= 1.5%)
+    if (isPlayerBest && winDrop <= 1.5) {
       return { type: 'best', label: 'Tốt nhất', icon: '★', colorClass: 'badge-best', color: '#81b64c' };
     }
 
-    // 8. Excellent / Good (👍): Small drop (2% - 5%) — Chess.com "Tuyệt vời"
-    if (winDrop <= 5.0) {
+    // 8. Excellent / Good (👍): Small drop (<= 2.5%) — Chess.com "Tuyệt vời"
+    if (winDrop <= 2.5) {
       return { type: 'good', label: 'Tuyệt vời', icon: '👍', colorClass: 'badge-good', color: '#81b64c' };
     }
 
-    // 9. Solid / OK (✓): fallback for edge cases
+    // 9. Solid / OK (✓): Minor drop (2.5% - 4.0%) — Chess.com "Tốt"
     return { type: 'solid', label: 'Tốt', icon: '✓', colorClass: 'badge-solid', color: '#81b64c' };
   }
 
@@ -809,11 +809,12 @@ export class GameReviewManager {
       // Sacrifice detection
       const isSacrifice = isBook ? false : this.isTrueSacrifice(fens[idx], m);
 
+      const playerMatchesBest = bestMoveCandidate ? (m.from === bestMoveCandidate.from && m.to === bestMoveCandidate.to) : false;
+
       // Great move detection: player played best move AND 2nd best is significantly worse
       // Chess.com standard: drop between best move and 2nd best move >= 12% in win chance
       let isGreat = false;
       if (!isBook && !isSacrifice && bestMoveCandidate) {
-        const playerMatchesBest = (m.from === bestMoveCandidate.from && m.to === bestMoveCandidate.to);
         if (playerMatchesBest && winDrop <= 1.0 && evalBefore.secondWinChance !== null) {
           const topWin = (side === 'w') ? evalBefore.winChance : (100 - evalBefore.winChance);
           const secondWin = (side === 'w') ? evalBefore.secondWinChance : (100 - evalBefore.secondWinChance);
@@ -825,7 +826,7 @@ export class GameReviewManager {
         }
       }
 
-      const classification = this.classifyMove(prevWin, currWin, isSacrifice, isBook, isGreat);
+      const classification = this.classifyMove(prevWin, currWin, isSacrifice, isBook, isGreat, playerMatchesBest);
 
       if (breakdownCounts[side][classification.type] !== undefined) {
         breakdownCounts[side][classification.type]++;
@@ -1160,8 +1161,9 @@ export class GameReviewManager {
       const winDrop = Math.max(0, prevWin - currWin);
 
       const isSacrifice = this.isTrueSacrifice(fenBeforeMove, m);
+      const isPlayerBest = (m.from === bestMoveCandidate?.from && m.to === bestMoveCandidate?.to);
 
-      const classification = this.classifyMove(prevWin, currWin, isSacrifice, isBook, isGreat);
+      const classification = this.classifyMove(prevWin, currWin, isSacrifice, isBook, isGreat, isPlayerBest);
 
       if (breakdownCounts[side][classification.type] !== undefined) {
         breakdownCounts[side][classification.type]++;

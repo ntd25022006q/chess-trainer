@@ -2202,11 +2202,12 @@ class ChessTrainerApp {
 
     try {
       const puzzle = await chessComApi.getDailyPuzzle();
+      const proxiedImg = puzzle.image ? `/api/proxy-image?url=${encodeURIComponent(puzzle.image)}` : '';
       body.innerHTML = `
         <div class="pub-puzzle-card">
           <h4 style="margin: 0 0 8px 0; color: #81b64c; font-size: 16px;">${puzzle.title || 'Câu đố hàng ngày'}</h4>
           <p style="color: #aaa; margin: 0 0 10px 0; font-size: 12px;">Xuất bản: ${new Date((puzzle.publish_time || Date.now() / 1000) * 1000).toLocaleDateString('vi-VN')}</p>
-          ${puzzle.image ? `<img src="${puzzle.image}" alt="Chess.com Daily Puzzle" class="pub-puzzle-img">` : ''}
+          ${proxiedImg ? `<img src="${proxiedImg}" alt="Chess.com Daily Puzzle" class="pub-puzzle-img" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : ''}
           <p style="margin: 10px 0; font-size: 13px;">FEN: <code style="background: #181614; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${puzzle.fen}</code></p>
           <div style="display: flex; gap: 8px; justify-content: center; margin-top: 14px;">
             <button id="btnLoadPuzzleGame" class="btn-url-analyze" style="padding: 8px 18px; font-size: 13px;">🔍 Phân tích thế cờ này với Stockfish</button>
@@ -2215,18 +2216,42 @@ class ChessTrainerApp {
         </div>
       `;
 
-      document.getElementById('btnLoadPuzzleGame')?.addEventListener('click', () => {
+      document.getElementById('btnLoadPuzzleGame')?.addEventListener('click', async () => {
         this.hidePubModal();
-        if (puzzle.pgn && puzzle.pgn.length > 20) {
-          this.importFromUrl(puzzle.url || `https://www.chess.com/game/daily/${puzzle.publish_time}`);
-        } else {
-          const fakePgn = `[SetUp "1"]\n[FEN "${puzzle.fen}"]\n\n*`;
-          this.loadGame({
-            gameId: `puzzle_${puzzle.publish_time || Date.now()}`,
-            url: puzzle.url || '',
-            players: { white: { username: 'White' }, black: { username: 'Black' } },
-            pgn: fakePgn
-          });
+        const pgnToLoad = puzzle.pgn || `[Result "*"]\n[SetUp "1"]\n[FEN "${puzzle.fen}"]\n\n*`;
+        const btn = document.getElementById('btnTopAnalyze');
+        const origText = btn ? btn.textContent : '';
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = '🔍 Đang phân tích câu đố...';
+        }
+        try {
+          const analyzed = await GameReviewManager.analyzeGameWithStockfish(
+            pgnToLoad,
+            this.engine,
+            { players: { white: { username: 'White' }, black: { username: 'Black' } } }
+          );
+          if (analyzed) {
+            this.loadGame({
+              gameId: `puzzle_${puzzle.publish_time || Date.now()}`,
+              url: puzzle.url || '',
+              headers: { White: 'White', Black: 'Black', Event: puzzle.title || 'Câu đố hàng ngày' },
+              players: {
+                white: { username: 'White', rating: 2500, title: '' },
+                black: { username: 'Black', rating: 2500, title: '' }
+              },
+              ...analyzed,
+              pgn: pgnToLoad
+            });
+            this.engine.restoreAfterReview();
+          }
+        } catch (e) {
+          console.warn('Puzzle analysis error:', e);
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = origText;
+          }
         }
       });
     } catch (err) {

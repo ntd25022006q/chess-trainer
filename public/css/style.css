@@ -71,9 +71,20 @@ body.dark-theme {
 
 .chesscom-brand-name {
   font-weight: 800;
-  font-size: 15px;
+  font-size: 16px;
   color: #fff;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
+}
+
+.chesscom-brand-name .brand-com {
+  color: #81b64c;
+}
+
+.chesscom-pawn-logo {
+  width: 24px;
+  height: 24px;
+  display: block;
+  flex-shrink: 0;
 }
 
 .nav-path-separator {
