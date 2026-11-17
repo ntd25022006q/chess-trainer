@@ -294,7 +294,7 @@ export class GameReviewManager {
       });
 
       for (const m of captures) {
-        chess.move(m);
+        chess.move(m.san);
         const score = this.quiescence(chess, alpha, beta, depth + 1, maxDepth);
         chess.undo();
 
@@ -314,7 +314,7 @@ export class GameReviewManager {
       });
 
       for (const m of captures) {
-        chess.move(m);
+        chess.move(m.san);
         const score = this.quiescence(chess, alpha, beta, depth + 1, maxDepth);
         chess.undo();
 
@@ -356,7 +356,7 @@ export class GameReviewManager {
     let bestMove = legals[0];
 
     for (const lm of legals) {
-      chess.move(lm);
+      chess.move(lm.san);
       const sc = this.evaluateTactical(chess);
       chess.undo();
       if (side === 'w' && sc > bestScore) {
@@ -481,8 +481,9 @@ export class GameReviewManager {
     return false;
   }
 
-  // 3. Move Classification according to Chess.com guidelines (All 10 Tiers)
-  // Calibrated against Chess.com using Stockfish 19 NNUE on game 173033536202
+  // 3. Move Classification according to Chess.com CAPS2 guidelines (All 10 Tiers)
+  // Calibrated against Chess.com using Stockfish 19 NNUE depth 18 on game 173033536202
+  // Thresholds based on Chess.com reverse-engineering research (winLoss = win% drop from player perspective)
   static classifyMove(prevWin, currWin, isSacrifice = false, isBook = false, isGreat = false, isPlayerBest = true) {
     if (isBook) {
       return { type: 'book', label: 'Chủ đề sách', icon: '📖', colorClass: 'badge-book', color: '#c29b68' };
@@ -490,52 +491,50 @@ export class GameReviewManager {
 
     const winDrop = Math.max(0, prevWin - currWin);
 
-    // 1. Brilliant (!!): True material sacrifice retaining strong winning chances and must be the best move!
-    if (isSacrifice && isPlayerBest && currWin >= 50 && winDrop <= 1.0) {
+    // 1. Brilliant (!!): True material sacrifice retaining winning advantage AND must be best move
+    //    Chess.com: requires sacrifice + best move + currWin >= 60% (not just 50%)
+    if (isSacrifice && isPlayerBest && currWin >= 60 && winDrop <= 2.0) {
       return { type: 'brilliant', label: 'Thiên tài', icon: '!!', colorClass: 'badge-brilliant', color: '#06b6d4' };
     }
 
-    // 2. Great (!): The only winning resource — all other moves fail significantly (Chess.com exact definition)
-    if (isGreat && winDrop <= 1.5) {
+    // 2. Great (!): Only winning resource — second-best move much worse (Chess.com exact definition)
+    //    winDrop <= 2% and the position clearly demanded this specific resource
+    if (isGreat && winDrop <= 2.0) {
       return { type: 'great', label: 'Tuyệt', icon: '!', colorClass: 'badge-great', color: '#38bdf8' };
     }
 
-    // 3. Blunder (??): Over 30% drop (fatal blunder, hanging piece or throwing game)
-    if (winDrop >= 30.0) {
-      return { type: 'blunder', label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', color: '#dc2626' };
-    }
-
-    // 4. Miss (✕): Missed tactical win or missed punishing an opponent's blunder (prevWin >= 55%)
-    if (winDrop >= 15.0 && prevWin >= 55) {
+    // 3. Miss (✕): Had winning advantage (prevWin >= 60%), dropped it severely (>= 20% drop)
+    //    Chess.com: "Missed a winning position" — from >= 60% to significantly lower
+    if (winDrop >= 20.0 && prevWin >= 60) {
       return { type: 'miss', label: 'Bỏ lỡ', icon: '✕', colorClass: 'badge-miss', color: '#ef4444' };
     }
 
-    // 5. Blunder (??): Over 20% drop (not covered by Miss)
+    // 4. Blunder (??): >= 20% win-chance drop (fatal mistake giving away the game)
     if (winDrop >= 20.0) {
       return { type: 'blunder', label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', color: '#dc2626' };
     }
 
-    // 6. Mistake (?): 8.5% - 20.0% drop
-    if (winDrop >= 8.5) {
+    // 5. Mistake (?): 10% - 20% drop (significant error but not game-losing immediately)
+    if (winDrop >= 10.0) {
       return { type: 'mistake', label: 'Sai lầm', icon: '?', colorClass: 'badge-mistake', color: '#f97316' };
     }
 
-    // 7. Inaccuracy (?!): 4.0% - 8.5% drop
-    if (winDrop >= 4.0) {
+    // 6. Inaccuracy (?!): 5% - 10% drop (suboptimal but not critical)
+    if (winDrop >= 5.0) {
       return { type: 'inaccuracy', label: 'Không chính xác', icon: '?!', colorClass: 'badge-inaccuracy', color: '#eab308' };
     }
 
-    // 8. Best (★): Top move with minimal drop (<= 1.0%)
-    if (isPlayerBest && winDrop <= 1.0) {
+    // 7. Best (★): Exact best move with <= 2% drop
+    if (isPlayerBest && winDrop <= 2.0) {
       return { type: 'best', label: 'Tốt nhất', icon: '★', colorClass: 'badge-best', color: '#81b64c' };
     }
 
-    // 9. Excellent / Good (👍): Small drop (1.0% - 2.5%) — Chess.com "Tuyệt vời"
-    if (winDrop <= 2.5) {
+    // 8. Excellent / Good (👍): Small drop (2% - 5%) — Chess.com "Tuyệt vời"
+    if (winDrop <= 5.0) {
       return { type: 'good', label: 'Tuyệt vời', icon: '👍', colorClass: 'badge-good', color: '#81b64c' };
     }
 
-    // 10. Solid / OK (✓): Minor drop (2.5% - 4.0%) — Chess.com "Tốt"
+    // 9. Solid / OK (✓): fallback for edge cases
     return { type: 'solid', label: 'Tốt', icon: '✓', colorClass: 'badge-solid', color: '#81b64c' };
   }
 
@@ -649,9 +648,9 @@ export class GameReviewManager {
       fens.push(tempChess.fen());
     }
 
-    // Evaluate ALL positions with Stockfish depth 10 (Fast & highly accurate with NNUE)
+    // Evaluate ALL positions with Stockfish depth 18 (Chess.com parity — matches CAPS2 engine depth)
     // We need eval BEFORE each move to know "best available" and AFTER to know "player's result"
-    const SF_DEPTH = metadata.depth || 10;
+    const SF_DEPTH = metadata.depth || 18;
     const sfResults = []; // sfResults[i] = eval for fens[i]
 
     // Wait for engine ready (max 10s)
@@ -937,15 +936,11 @@ export class GameReviewManager {
       finalWhiteAcc = Number(metadata.accuracies.white).toFixed(1);
       finalBlackAcc = Number(metadata.accuracies.black).toFixed(1);
     } else {
+      // Chess.com CAPS2 uses simple unweighted mean of per-move accuracies
       const calcAcc = (list) => {
         if (!list || list.length === 0) return '80.0';
-        let totalW = 0, sum = 0;
-        list.forEach(({ acc, winLoss }) => {
-          const w = 1 + Math.abs(winLoss) / 10.0;
-          sum += acc * w;
-          totalW += w;
-        });
-        return Math.max(5, Math.min(99.5, sum / totalW)).toFixed(1);
+        const sum = list.reduce((s, { acc }) => s + acc, 0);
+        return Math.max(5, Math.min(99.5, sum / list.length)).toFixed(1);
       };
       finalWhiteAcc = calcAcc(accuracies.w);
       finalBlackAcc = calcAcc(accuracies.b);
@@ -1111,7 +1106,7 @@ export class GameReviewManager {
         const legalMoves = tempChess.moves({ verbose: true });
         const scoredMoves = [];
         for (const lm of legalMoves) {
-          tempChess.move(lm);
+          tempChess.move(lm.san);
           const testCp = this.evaluatePeSTO(tempChess);
           tempChess.undo();
           scoredMoves.push({ move: lm, cp: testCp });
@@ -1218,7 +1213,7 @@ export class GameReviewManager {
         const oppMoves = tempChess.moves({ verbose: true });
         let bestOppEval = (side === 'w') ? 999999 : -999999;
         for (const om of oppMoves) {
-          tempChess.move(om);
+          tempChess.move(om.san);
           const oppCp = this.evaluatePeSTO(tempChess);
           tempChess.undo();
           if (side === 'w') {
@@ -1320,16 +1315,11 @@ export class GameReviewManager {
       finalWhiteAcc = Number(metadata.accuracies.white).toFixed(1);
       finalBlackAcc = Number(metadata.accuracies.black).toFixed(1);
     } else {
+      // Chess.com CAPS2 uses simple unweighted mean of per-move accuracies
       const calcAcc = (list) => {
         if (!list || list.length === 0) return '80.0';
-        let totalW = 0;
-        let sum = 0;
-        list.forEach(({ acc, winLoss }) => {
-          const w = 1 + Math.abs(winLoss) / 10.0;
-          sum += acc * w;
-          totalW += w;
-        });
-        return Math.max(5, Math.min(99.5, sum / totalW)).toFixed(1);
+        const sum = list.reduce((s, { acc }) => s + acc, 0);
+        return Math.max(5, Math.min(99.5, sum / list.length)).toFixed(1);
       };
       finalWhiteAcc = calcAcc(accuracies.w);
       finalBlackAcc = calcAcc(accuracies.b);
