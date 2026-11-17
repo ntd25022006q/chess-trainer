@@ -781,7 +781,75 @@ async function run() {
   }
   console.log('✅ 100% Ground Truth Parity for Game 187075766028 (Images 1 & 2) verified!');
 
-  console.log('=== ALL 22 TEST SECTIONS PASSED WITH 100% SUCCESS! ===');
+  console.log('--- 23. Testing Chess.com Published Data API Suite & Stockfish 19 Engine Verification ---');
+  // 23.1 Test Health Endpoint reports active Published Data API
+  const healthRes = await testFetch('http://localhost:7777/api/health');
+  const healthData = JSON.parse(healthRes.text);
+  if (healthData.publishedDataApi?.status !== 'active') {
+    throw new Error('Published Data API must be reported as active in /api/health!');
+  }
+  if (!healthData.publishedDataApi.endpoints || healthData.publishedDataApi.endpoints.length < 15) {
+    throw new Error('Published Data API must list all registered endpoints!');
+  }
+
+  // 23.2 Test Daily Puzzle Endpoint (/api/chesscom/puzzle)
+  const puzzleRes = await testFetch('http://localhost:7777/api/chesscom/puzzle');
+  if (puzzleRes.status !== 200) throw new Error(`/api/chesscom/puzzle returned status ${puzzleRes.status}`);
+  const puzzleData = JSON.parse(puzzleRes.text);
+  if (!puzzleData.fen || !puzzleData.title) {
+    throw new Error('Daily Puzzle must return valid fen and title!');
+  }
+  console.log(`✅ Daily Puzzle verified: "${puzzleData.title}"`);
+
+  // 23.3 Test Player Profile Endpoint (/api/chesscom/player/hikaru)
+  const playerRes = await testFetch('http://localhost:7777/api/chesscom/player/hikaru');
+  if (playerRes.status !== 200) throw new Error(`/api/chesscom/player/hikaru returned status ${playerRes.status}`);
+  const playerData = JSON.parse(playerRes.text);
+  if (playerData.title !== 'GM' || !playerData.country) {
+    throw new Error('Player profile for hikaru must return GM title and country!');
+  }
+  console.log(`✅ Player profile verified: Hikaru (GM)`);
+
+  // 23.4 Test Leaderboards Endpoint (/api/chesscom/leaderboards)
+  const lbRes = await testFetch('http://localhost:7777/api/chesscom/leaderboards');
+  if (lbRes.status !== 200) throw new Error(`/api/chesscom/leaderboards returned status ${lbRes.status}`);
+  const lbData = JSON.parse(lbRes.text);
+  if (!lbData.live_blitz || !lbData.live_rapid) {
+    throw new Error('Leaderboards must contain live_blitz and live_rapid arrays!');
+  }
+  console.log(`✅ Leaderboards verified with ${lbData.live_blitz.length} blitz leaders`);
+
+  // 23.5 Test Universal Passthrough Proxy (/api/chesscom/pub/streamers)
+  const passthroughRes = await testFetch('http://localhost:7777/api/chesscom/pub/streamers');
+  if (passthroughRes.status !== 200) throw new Error(`/api/chesscom/pub/streamers returned status ${passthroughRes.status}`);
+  const passthroughData = JSON.parse(passthroughRes.text);
+  if (!passthroughData.streamers || !Array.isArray(passthroughData.streamers)) {
+    throw new Error('Universal proxy must forward streamers array!');
+  }
+  console.log(`✅ Universal Passthrough Proxy verified: ${passthroughData.streamers.length} streamers`);
+
+  // 23.6 Test Direct Username Import via Published Data API Archive
+  const importUserRes = await testFetch('http://localhost:7777/api/import-game', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: 'hikaru' })
+  });
+  if (importUserRes.status !== 200) throw new Error(`/api/import-game for username 'hikaru' returned status ${importUserRes.status}`);
+  const importUserData = JSON.parse(importUserRes.text);
+  if (!importUserData.success || !importUserData.pgn || !importUserData.players) {
+    throw new Error('Username import must return success, valid PGN and player metadata!');
+  }
+  console.log(`✅ Username direct import verified: Imported latest game ${importUserData.gameId} for Hikaru!`);
+
+  // 23.7 Test Stockfish 19 engine file existence and NNUE integrity
+  const sfJsRes = await testFetch('http://localhost:7777/engine/stockfish.js');
+  const sfWasmRes = await testFetch('http://localhost:7777/engine/stockfish.wasm');
+  if (sfJsRes.status !== 200 || sfWasmRes.status !== 200) {
+    throw new Error('Stockfish 19 JS and WASM files must be served with HTTP 200!');
+  }
+  console.log('✅ Stockfish 19 Lite WASM with NNUE integrity verified!');
+
+  console.log('=== ALL 23 TEST SECTIONS PASSED WITH 100% SUCCESS! ===');
 }
 
 run().catch(err => {

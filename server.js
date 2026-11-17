@@ -26,16 +26,379 @@ app.use(express.static(publicDir, {
   }
 }));
 
-// Health check endpoint
+// Health check endpoint with complete Published Data API & Stockfish 19 engine status
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     app: 'DeepChess Pro Max (Chess.com Review Engine)',
     engine: 'Stockfish 19 (Chess.com Official WASM / CAPS2 Enabled)',
+    publishedDataApi: {
+      status: 'active',
+      specification: 'https://www.chess.com/news/view/published-data-api',
+      baseUrl: 'https://api.chess.com/pub/',
+      endpoints: [
+        '/api/chesscom/pub/*',
+        '/api/chesscom/player/:username',
+        '/api/chesscom/player/:username/stats',
+        '/api/chesscom/player/:username/is-online',
+        '/api/chesscom/player/:username/games',
+        '/api/chesscom/player/:username/games/to-move',
+        '/api/chesscom/player/:username/games/archives',
+        '/api/chesscom/player/:username/games/:year/:month',
+        '/api/chesscom/player/:username/games/:year/:month/pgn',
+        '/api/chesscom/player/:username/clubs',
+        '/api/chesscom/club/:urlId',
+        '/api/chesscom/club/:urlId/members',
+        '/api/chesscom/club/:urlId/matches',
+        '/api/chesscom/tournament/:urlId',
+        '/api/chesscom/tournament/:urlId/:round',
+        '/api/chesscom/tournament/:urlId/:round/:group',
+        '/api/chesscom/country/:iso',
+        '/api/chesscom/country/:iso/players',
+        '/api/chesscom/country/:iso/clubs',
+        '/api/chesscom/leaderboards',
+        '/api/chesscom/titled/:title',
+        '/api/chesscom/streamers',
+        '/api/chesscom/puzzle',
+        '/api/chesscom/puzzle/random'
+      ]
+    },
     port: DEFAULT_PORT,
     timestamp: new Date().toISOString()
   });
 });
+
+// ============================================================
+// CHESS.COM PUBLISHED DATA API SYSTEM
+// Specification: https://www.chess.com/news/view/published-data-api
+// Base: https://api.chess.com/pub/
+// ============================================================
+const pubApiCache = new Map();
+
+async function fetchChessComPub(endpointPath, ttlMs = 120000, asText = false) {
+  const cleanPath = endpointPath.replace(/^\/+/, '');
+  const cacheKey = `${asText ? 'text:' : 'json:'}${cleanPath}`;
+  const now = Date.now();
+
+  if (pubApiCache.has(cacheKey)) {
+    const cached = pubApiCache.get(cacheKey);
+    if (now < cached.expiresAt) {
+      return cached.data;
+    }
+    pubApiCache.delete(cacheKey);
+  }
+
+  const targetUrl = `https://api.chess.com/pub/${cleanPath}`;
+  const response = await fetch(targetUrl, {
+    headers: {
+      'User-Agent': 'ChessTrainerBot/2.0 (DeepChessPro; contact: admin@chess-trainer.local)',
+      'Accept': asText ? 'text/plain, application/x-chess-pgn, */*' : 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    const err = new Error(`Chess.com Pub API error: ${response.status} ${response.statusText}`);
+    err.status = response.status;
+    throw err;
+  }
+
+  const data = asText ? await response.text() : await response.json();
+  pubApiCache.set(cacheKey, { data, expiresAt: now + ttlMs, isText: asText });
+  return data;
+}
+
+// 1. Universal Passthrough Proxy: /api/chesscom/pub/*
+app.use('/api/chesscom/pub', async (req, res) => {
+  try {
+    const rawPath = req.path.replace(/^\/+/, '');
+    const isPgn = rawPath.endsWith('/pgn');
+    const data = await fetchChessComPub(rawPath, 120000, isPgn);
+    if (isPgn) {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.send(data);
+    }
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+// 2. Player Data Endpoints
+app.get('/api/chesscom/player/:username', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const data = await fetchChessComPub(`player/${u}`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/player/:username/stats', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const data = await fetchChessComPub(`player/${u}/stats`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/player/:username/is-online', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const data = await fetchChessComPub(`player/${u}/is-online`, 30000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/player/:username/games', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const data = await fetchChessComPub(`player/${u}/games`, 60000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/player/:username/games/to-move', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const data = await fetchChessComPub(`player/${u}/games/to-move`, 60000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/player/:username/games/archives', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const data = await fetchChessComPub(`player/${u}/games/archives`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/player/:username/games/:year/:month', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const { year, month } = req.params;
+    const m = month.padStart(2, '0');
+    const data = await fetchChessComPub(`player/${u}/games/${year}/${m}`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/player/:username/games/:year/:month/pgn', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const { year, month } = req.params;
+    const m = month.padStart(2, '0');
+    const data = await fetchChessComPub(`player/${u}/games/${year}/${m}/pgn`, 300000, true);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return res.send(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/player/:username/clubs', async (req, res) => {
+  try {
+    const u = encodeURIComponent(req.params.username.toLowerCase().trim());
+    const data = await fetchChessComPub(`player/${u}/clubs`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+// 3. Club Data Endpoints
+app.get('/api/chesscom/club/:urlId', async (req, res) => {
+  try {
+    const id = encodeURIComponent(req.params.urlId.toLowerCase().trim());
+    const data = await fetchChessComPub(`club/${id}`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/club/:urlId/members', async (req, res) => {
+  try {
+    const id = encodeURIComponent(req.params.urlId.toLowerCase().trim());
+    const data = await fetchChessComPub(`club/${id}/members`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/club/:urlId/matches', async (req, res) => {
+  try {
+    const id = encodeURIComponent(req.params.urlId.toLowerCase().trim());
+    const data = await fetchChessComPub(`club/${id}/matches`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+// 4. Tournament Endpoints
+app.get('/api/chesscom/tournament/:urlId', async (req, res) => {
+  try {
+    const id = encodeURIComponent(req.params.urlId.toLowerCase().trim());
+    const data = await fetchChessComPub(`tournament/${id}`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/tournament/:urlId/:round', async (req, res) => {
+  try {
+    const id = encodeURIComponent(req.params.urlId.toLowerCase().trim());
+    const { round } = req.params;
+    const data = await fetchChessComPub(`tournament/${id}/${round}`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/tournament/:urlId/:round/:group', async (req, res) => {
+  try {
+    const id = encodeURIComponent(req.params.urlId.toLowerCase().trim());
+    const { round, group } = req.params;
+    const data = await fetchChessComPub(`tournament/${id}/${round}/${group}`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+// 5. Country Data Endpoints
+app.get('/api/chesscom/country/:iso', async (req, res) => {
+  try {
+    const iso = encodeURIComponent(req.params.iso.toUpperCase().trim());
+    const data = await fetchChessComPub(`country/${iso}`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/country/:iso/players', async (req, res) => {
+  try {
+    const iso = encodeURIComponent(req.params.iso.toUpperCase().trim());
+    const data = await fetchChessComPub(`country/${iso}/players`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/country/:iso/clubs', async (req, res) => {
+  try {
+    const iso = encodeURIComponent(req.params.iso.toUpperCase().trim());
+    const data = await fetchChessComPub(`country/${iso}/clubs`, 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+// 6. Leaderboards, Titled Players, Streamers & Puzzles
+app.get('/api/chesscom/leaderboards', async (req, res) => {
+  try {
+    const data = await fetchChessComPub('leaderboards', 600000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/titled/:title', async (req, res) => {
+  try {
+    const title = encodeURIComponent(req.params.title.toUpperCase().trim());
+    const data = await fetchChessComPub(`titled/${title}`, 600000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/streamers', async (req, res) => {
+  try {
+    const data = await fetchChessComPub('streamers', 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/puzzle', async (req, res) => {
+  try {
+    const data = await fetchChessComPub('puzzle', 300000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chesscom/puzzle/random', async (req, res) => {
+  try {
+    const data = await fetchChessComPub('puzzle/random', 5000);
+    return res.json(data);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+// Country Code ISO Mapping and Resolver
+const COUNTRY_CODE_MAP = {
+  'bulgaria': 'BG', 'uzbekistan': 'UZ', 'vietnam': 'VN', 'norway': 'NO',
+  'united states': 'US', 'russia': 'RU', 'ukraine': 'UA', 'india': 'IN',
+  'germany': 'DE', 'france': 'FR', 'china': 'CN', 'spain': 'ES',
+  'brazil': 'BR', 'canada': 'CA', 'united kingdom': 'GB', 'poland': 'PL',
+  'italy': 'IT', 'netherlands': 'NL', 'sweden': 'SE', 'armenia': 'AM',
+  'azerbaijan': 'AZ', 'israel': 'IL', 'kazakhstan': 'KZ', 'turkey': 'TR',
+  'hungary': 'HU', 'romania': 'RO', 'czechia': 'CZ', 'argentina': 'AR',
+  'cuba': 'CU', 'serbia': 'RS', 'philippines': 'PH', 'indonesia': 'ID',
+  'georgia': 'GE', 'greece': 'GR', 'croatia': 'HR', 'austria': 'AT',
+  'switzerland': 'CH', 'belgium': 'BE', 'denmark': 'DK', 'finland': 'FI',
+  'portugal': 'PT', 'mexico': 'MX', 'colombia': 'CO', 'chile': 'CL',
+  'peru': 'PE', 'egypt': 'EG', 'south africa': 'ZA', 'australia': 'AU',
+  'new zealand': 'NZ', 'singapore': 'SG', 'malaysia': 'MY', 'thailand': 'TH',
+  'japan': 'JP', 'south korea': 'KR', 'mongolia': 'MN'
+};
+
+async function resolveCountryIso(username, existingCode, existingName) {
+  if (existingCode && existingCode.trim().length === 2) return existingCode.trim().toUpperCase();
+  if (existingName && COUNTRY_CODE_MAP[existingName.toLowerCase().trim()]) {
+    return COUNTRY_CODE_MAP[existingName.toLowerCase().trim()];
+  }
+  if (!username) return 'UN';
+  try {
+    const pRes = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(username.toLowerCase().trim())}`, {
+      headers: { 'User-Agent': 'ChessTrainerBot/2.0' }
+    });
+    if (pRes.ok) {
+      const pData = await pRes.json();
+      if (pData.country) {
+        const iso = pData.country.split('/').pop().toUpperCase();
+        if (iso && iso.length === 2) return iso;
+      }
+    }
+  } catch (_) {}
+  return 'UN';
+}
 
 // In-memory cache for imported games (instant re-checking)
 const importedGamesCache = new Map();
@@ -179,44 +542,6 @@ app.post('/api/import-game', async (req, res) => {
       let whiteMeta = { username: whitePlayer, rating: pgnHeaders.WhiteElo || 1500, title: '', avatarUrl: '' };
       let blackMeta = { username: blackPlayer, rating: pgnHeaders.BlackElo || 1500, title: '', avatarUrl: '' };
 
-      const COUNTRY_CODE_MAP = {
-        'bulgaria': 'BG', 'uzbekistan': 'UZ', 'vietnam': 'VN', 'norway': 'NO',
-        'united states': 'US', 'russia': 'RU', 'ukraine': 'UA', 'india': 'IN',
-        'germany': 'DE', 'france': 'FR', 'china': 'CN', 'spain': 'ES',
-        'brazil': 'BR', 'canada': 'CA', 'united kingdom': 'GB', 'poland': 'PL',
-        'italy': 'IT', 'netherlands': 'NL', 'sweden': 'SE', 'armenia': 'AM',
-        'azerbaijan': 'AZ', 'israel': 'IL', 'kazakhstan': 'KZ', 'turkey': 'TR',
-        'hungary': 'HU', 'romania': 'RO', 'czechia': 'CZ', 'argentina': 'AR',
-        'cuba': 'CU', 'serbia': 'RS', 'philippines': 'PH', 'indonesia': 'ID',
-        'georgia': 'GE', 'greece': 'GR', 'croatia': 'HR', 'austria': 'AT',
-        'switzerland': 'CH', 'belgium': 'BE', 'denmark': 'DK', 'finland': 'FI',
-        'portugal': 'PT', 'mexico': 'MX', 'colombia': 'CO', 'chile': 'CL',
-        'peru': 'PE', 'egypt': 'EG', 'south africa': 'ZA', 'australia': 'AU',
-        'new zealand': 'NZ', 'singapore': 'SG', 'malaysia': 'MY', 'thailand': 'TH',
-        'japan': 'JP', 'south korea': 'KR', 'mongolia': 'MN'
-      };
-
-      async function resolveCountryIso(username, existingCode, existingName) {
-        if (existingCode && existingCode.trim().length === 2) return existingCode.trim().toUpperCase();
-        if (existingName && COUNTRY_CODE_MAP[existingName.toLowerCase().trim()]) {
-          return COUNTRY_CODE_MAP[existingName.toLowerCase().trim()];
-        }
-        if (!username) return 'UN';
-        try {
-          const pRes = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(username.toLowerCase().trim())}`, {
-            headers: { 'User-Agent': 'ChessTrainerBot/1.0' }
-          });
-          if (pRes.ok) {
-            const pData = await pRes.json();
-            if (pData.country) {
-              const iso = pData.country.split('/').pop().toUpperCase();
-              if (iso && iso.length === 2) return iso;
-            }
-          }
-        } catch (_) {}
-        return 'UN';
-      }
-
       if (cbData.players) {
         const top = cbData.players.top;
         const bottom = cbData.players.bottom;
@@ -311,6 +636,71 @@ app.post('/api/import-game', async (req, res) => {
         },
         accuracies,
         pgn: fullPgn
+      };
+
+      importedGamesCache.set(trimmedUrl, resultPayload);
+      return res.json(resultPayload);
+    }
+
+    // 3. Handle Direct Username via Published Data API (e.g. "hikaru", "magnuscarlsen", "@username", "player:username")
+    const userMatch = trimmedUrl.match(/^(?:@|player:)?([a-zA-Z0-9_\-]{3,30})$/);
+    if (userMatch && !trimmedUrl.includes('.')) {
+      const username = userMatch[1].toLowerCase();
+      const archData = await fetchChessComPub(`player/${username}/games/archives`, 60000);
+      if (!archData.archives || !archData.archives.length) {
+        return res.status(404).json({ error: `Không tìm thấy kho lưu trữ ván cờ của '${username}' trên Chess.com` });
+      }
+
+      const latestArchive = archData.archives[archData.archives.length - 1];
+      const parts = latestArchive.split('/');
+      const yr = parts[parts.length - 2];
+      const mo = parts[parts.length - 1];
+      const monthData = await fetchChessComPub(`player/${username}/games/${yr}/${mo}`, 60000);
+
+      if (!monthData.games || !monthData.games.length) {
+        return res.status(404).json({ error: `Kỳ thủ '${username}' chưa có ván cờ hoàn tất trong tháng gần nhất.` });
+      }
+
+      const foundGame = monthData.games[monthData.games.length - 1];
+      const gameIdMatch = (foundGame.url || '').match(/(\d+)$/);
+      const gameId = gameIdMatch ? gameIdMatch[1] : `game_${Date.now()}`;
+
+      // Resolve country ISO for both players
+      const [wIso, bIso] = await Promise.all([
+        resolveCountryIso(foundGame.white?.username, '', ''),
+        resolveCountryIso(foundGame.black?.username, '', '')
+      ]);
+
+      const resultPayload = {
+        success: true,
+        source: 'Chess.com Published Data API (Archive)',
+        gameId,
+        url: foundGame.url,
+        headers: {
+          White: foundGame.white?.username || 'White',
+          Black: foundGame.black?.username || 'Black',
+          WhiteElo: foundGame.white?.rating || 1500,
+          BlackElo: foundGame.black?.rating || 1500,
+          TimeControl: foundGame.time_control || '180'
+        },
+        players: {
+          white: {
+            username: foundGame.white?.username || 'White',
+            rating: foundGame.white?.rating || 1500,
+            countryCode: wIso,
+            flag: wIso,
+            result: foundGame.white?.result || ''
+          },
+          black: {
+            username: foundGame.black?.username || 'Black',
+            rating: foundGame.black?.rating || 1500,
+            countryCode: bIso,
+            flag: bIso,
+            result: foundGame.black?.result || ''
+          }
+        },
+        accuracies: foundGame.accuracies || null,
+        pgn: foundGame.pgn
       };
 
       importedGamesCache.set(trimmedUrl, resultPayload);

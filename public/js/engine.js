@@ -59,8 +59,10 @@ export class StockfishEngine {
     if (typeof line !== 'string') return;
 
     if (line === 'uciok') {
-      this.sendCommand('setoption name Threads value 2');
-      this.sendCommand('setoption name Hash value 32');
+      // Stockfish 19 Lite WASM NNUE configuration
+      this.sendCommand('setoption name Threads value 1');
+      this.sendCommand('setoption name Hash value 64');
+      this.sendCommand('setoption name UCI_ShowWDL value true');
       this.setMultiPv(this.multiPvCount);
       this.sendCommand('isready');
       return;
@@ -253,6 +255,19 @@ export class StockfishEngine {
   // Properly stops any ongoing analysis before starting a new one.
   evaluatePositionAsync(fen, depth = 16) {
     return new Promise((resolve) => {
+      if (!this.worker) {
+        return resolve({
+          scoreWhite: 0,
+          winChance: 50,
+          bestMove: null,
+          pv: '',
+          isMate: false,
+          secondBestMove: null,
+          secondWinChance: null,
+          secondScoreWhite: null
+        });
+      }
+
       const parts = fen.split(' ');
       const turn = parts[1] || 'w';
 

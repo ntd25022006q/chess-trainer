@@ -1,10 +1,11 @@
 import { Chess } from '../lib/chess.js';
-import { StockfishEngine } from './engine.js?v=9.0';
-import { ChessBoardUI } from './board.js?v=9.0';
-import { chessAudio } from './audio.js?v=9.0';
-import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=9.0';
-import { AdvantageChart } from './chart.js?v=9.0';
-import { GameReviewManager } from './gameReview.js?v=9.0';
+import { StockfishEngine } from './engine.js?v=9.1';
+import { ChessBoardUI } from './board.js?v=9.1';
+import { chessAudio } from './audio.js?v=9.1';
+import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=9.1';
+import { AdvantageChart } from './chart.js?v=9.1';
+import { GameReviewManager } from './gameReview.js?v=9.1';
+import { chessComApi } from './chessComApi.js?v=9.1';
 
 export function formatSanWithSymbol(san, color = 'w') {
   if (!san) return '';
@@ -157,6 +158,14 @@ class ChessTrainerApp {
         if (e.key === 'Enter') triggerAnalyze();
       });
     }
+
+    // Chess.com Published Data API Quick Actions
+    document.getElementById('btnDailyPuzzle')?.addEventListener('click', () => this.showDailyPuzzleModal());
+    document.getElementById('btnLeaderboard')?.addEventListener('click', () => this.showLeaderboardModal());
+    document.getElementById('btnPubModalClose')?.addEventListener('click', () => this.hidePubModal());
+    document.getElementById('pubApiModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'pubApiModal') this.hidePubModal();
+    });
 
     // Top Navigation Action Buttons
     const onFlip = (e) => {
@@ -2179,6 +2188,111 @@ class ChessTrainerApp {
     } else {
       this.board.clearSelection();
     }
+  }
+
+  async showDailyPuzzleModal() {
+    const modal = document.getElementById('pubApiModal');
+    const title = document.getElementById('pubModalTitle');
+    const body = document.getElementById('pubModalBody');
+    if (!modal || !body) return;
+
+    modal.classList.remove('hidden');
+    title.textContent = '🧩 Câu đố hàng ngày Chess.com (Published Data API)';
+    body.innerHTML = '<p>Đang tải câu đố mới nhất từ Chess.com...</p>';
+
+    try {
+      const puzzle = await chessComApi.getDailyPuzzle();
+      body.innerHTML = `
+        <div class="pub-puzzle-card">
+          <h4 style="margin: 0 0 8px 0; color: #81b64c; font-size: 16px;">${puzzle.title || 'Câu đố hàng ngày'}</h4>
+          <p style="color: #aaa; margin: 0 0 10px 0; font-size: 12px;">Xuất bản: ${new Date((puzzle.publish_time || Date.now() / 1000) * 1000).toLocaleDateString('vi-VN')}</p>
+          ${puzzle.image ? `<img src="${puzzle.image}" alt="Chess.com Daily Puzzle" class="pub-puzzle-img">` : ''}
+          <p style="margin: 10px 0; font-size: 13px;">FEN: <code style="background: #181614; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${puzzle.fen}</code></p>
+          <div style="display: flex; gap: 8px; justify-content: center; margin-top: 14px;">
+            <button id="btnLoadPuzzleGame" class="btn-url-analyze" style="padding: 8px 18px; font-size: 13px;">🔍 Phân tích thế cờ này với Stockfish</button>
+            <a href="${puzzle.url || 'https://www.chess.com/daily-chess-puzzle'}" target="_blank" rel="noopener noreferrer" class="btn-url-secondary" style="padding: 8px 14px; text-decoration: none; font-size: 13px;">Xem trên Chess.com ↗</a>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('btnLoadPuzzleGame')?.addEventListener('click', () => {
+        this.hidePubModal();
+        if (puzzle.pgn && puzzle.pgn.length > 20) {
+          this.importFromUrl(puzzle.url || `https://www.chess.com/game/daily/${puzzle.publish_time}`);
+        } else {
+          const fakePgn = `[SetUp "1"]\n[FEN "${puzzle.fen}"]\n\n*`;
+          this.loadGame({
+            gameId: `puzzle_${puzzle.publish_time || Date.now()}`,
+            url: puzzle.url || '',
+            players: { white: { username: 'White' }, black: { username: 'Black' } },
+            pgn: fakePgn
+          });
+        }
+      });
+    } catch (err) {
+      body.innerHTML = `<p style="color: #ef4444;">⚠️ Không thể tải câu đố: ${err.message}</p>`;
+    }
+  }
+
+  async showLeaderboardModal() {
+    const modal = document.getElementById('pubApiModal');
+    const title = document.getElementById('pubModalTitle');
+    const body = document.getElementById('pubModalBody');
+    if (!modal || !body) return;
+
+    modal.classList.remove('hidden');
+    title.textContent = '🏆 Bảng xếp hạng Top 50 Chess.com (Published Data API)';
+    body.innerHTML = '<p>Đang tải bảng xếp hạng trực tiếp từ Chess.com...</p>';
+
+    try {
+      const data = await chessComApi.getLeaderboards();
+      const blitzTop = (data.live_blitz || []).slice(0, 8);
+      const rapidTop = (data.live_rapid || []).slice(0, 8);
+
+      body.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <h4 style="margin: 0 0 10px 0; color: #81b64c;">⚡ Top Live Blitz (Bấm kỳ thủ để xem ván gần nhất)</h4>
+          <div class="pub-leader-list">
+            ${blitzTop.map((p, idx) => `
+              <div class="pub-leader-item" data-username="${p.username}" title="Bấm để phân tích ván đấu mới nhất của ${p.username}">
+                <span class="pub-leader-rank">#${idx + 1}</span>
+                <span class="pub-leader-user">${p.title ? `<span class="chess-title-tag gm" style="font-size: 10px; margin-right: 4px;">${p.title}</span>` : ''}${p.username}</span>
+                <span class="pub-leader-score">${p.score}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div>
+          <h4 style="margin: 0 0 10px 0; color: #38bdf8;">⏱️ Top Live Rapid</h4>
+          <div class="pub-leader-list">
+            ${rapidTop.map((p, idx) => `
+              <div class="pub-leader-item" data-username="${p.username}" title="Bấm để phân tích ván đấu mới nhất của ${p.username}">
+                <span class="pub-leader-rank">#${idx + 1}</span>
+                <span class="pub-leader-user">${p.title ? `<span class="chess-title-tag gm" style="font-size: 10px; margin-right: 4px;">${p.title}</span>` : ''}${p.username}</span>
+                <span class="pub-leader-score">${p.score}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      body.querySelectorAll('.pub-leader-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const u = el.dataset.username;
+          this.hidePubModal();
+          const inp = document.getElementById('topGameUrlInput');
+          if (inp) inp.value = u;
+          this.importFromUrl(u);
+        });
+      });
+    } catch (err) {
+      body.innerHTML = `<p style="color: #ef4444;">⚠️ Không thể tải bảng xếp hạng: ${err.message}</p>`;
+    }
+  }
+
+  hidePubModal() {
+    document.getElementById('pubApiModal')?.classList.add('hidden');
   }
 }
 
