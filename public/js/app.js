@@ -621,7 +621,10 @@ class ChessTrainerApp {
   getSafeAvatarUrl(url, username) {
     if (username === 'MagnusCarlsen') return '/assets/avatars/magnus.jpg';
     if (username === 'Witty_Alien') return '/assets/avatars/alien.png';
-    if (!url) return '/assets/default-user.svg';
+    // Fallback to official silhouette if URL is missing or points to the known solid-black placeholder WebP
+    if (!url || url.includes('34145346.088fe903.100x100o.09ab6d51e1c4.webp')) {
+      return '/assets/default-user.svg';
+    }
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return `/api/proxy-image?url=${encodeURIComponent(url)}`;
     }
@@ -1170,8 +1173,13 @@ class ChessTrainerApp {
     // 1. Play Sound
     const last = (index > 0 && this.gameMoves) ? this.gameMoves[index - 1] : null;
     if (last) {
-      if (last.captured) chessAudio.playCapture();
-      else chessAudio.playMove();
+      if (last.san && (last.san.includes('+') || last.san.includes('#') || (this.chess && this.chess.in_check && this.chess.in_check()))) {
+        chessAudio.playCheck();
+      } else if (last.captured) {
+        chessAudio.playCapture();
+      } else {
+        chessAudio.playMove();
+      }
     }
 
     // 2. Prepare single atomic board render state (Zero layout shift & zero flicker)
