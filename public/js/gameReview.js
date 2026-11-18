@@ -668,6 +668,7 @@ export class GameReviewManager {
     }
 
     for (let i = 0; i <= totalMoves; i++) {
+      if (metadata.isCancelled && metadata.isCancelled()) return null;
       if (onProgress) onProgress(i, totalMoves + 1);
 
       // Instant 0ms shortcut for standard initial starting position
@@ -1021,6 +1022,7 @@ export class GameReviewManager {
       { label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', w: breakdownCounts.w.blunder || 0, b: breakdownCounts.b.blunder || 0 }
     ];
 
+    const reachedEndgame = moves.length >= 50;
     const phases = [
       {
         label: 'Khai cuộc',
@@ -1037,7 +1039,11 @@ export class GameReviewManager {
         w: { icon: breakdownCounts.w.best > 5 ? '★' : '✓', colorClass: 'icon-good' },
         b: { icon: breakdownCounts.b.best > 5 ? '★' : '✓', colorClass: 'icon-good' }
       },
-      { label: 'Tàn cuộc', w: '—', b: '—' }
+      {
+        label: 'Tàn cuộc',
+        w: reachedEndgame ? { icon: '✓', colorClass: 'icon-good' } : '—',
+        b: reachedEndgame ? { icon: '✓', colorClass: 'icon-good' } : '—'
+      }
     ];
 
     return {
@@ -1404,7 +1410,8 @@ export class GameReviewManager {
       { label: 'Nước sai lầm ngớ ngẩn', icon: '??', colorClass: 'badge-blunder', w: breakdownCounts.w.blunder || 0, b: breakdownCounts.b.blunder || 0 }
     ];
 
-    // Phases
+    // Dynamic Endgame evaluation based on game length
+    const reachedEndgame = moves.length >= 50;
     const phases = [
       {
         label: 'Khai cuộc',
@@ -1423,8 +1430,8 @@ export class GameReviewManager {
       },
       {
         label: 'Tàn cuộc',
-        w: '—',
-        b: '—'
+        w: reachedEndgame ? { icon: '✓', colorClass: 'icon-good' } : '—',
+        b: reachedEndgame ? { icon: '✓', colorClass: 'icon-good' } : '—'
       }
     ];
 

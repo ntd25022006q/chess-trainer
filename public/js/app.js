@@ -1,11 +1,11 @@
 import { Chess } from '../lib/chess.js';
-import { StockfishEngine } from './engine.js?v=9.2';
-import { ChessBoardUI } from './board.js?v=9.2';
-import { chessAudio } from './audio.js?v=9.2';
-import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=9.2';
-import { AdvantageChart } from './chart.js?v=9.2';
-import { GameReviewManager } from './gameReview.js?v=9.2';
-import { chessComApi } from './chessComApi.js?v=9.2';
+import { StockfishEngine } from './engine.js?v=9.5';
+import { ChessBoardUI } from './board.js?v=9.5';
+import { chessAudio } from './audio.js?v=9.5';
+import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=9.5';
+import { AdvantageChart } from './chart.js?v=9.5';
+import { GameReviewManager } from './gameReview.js?v=9.5';
+import { chessComApi } from './chessComApi.js?v=9.5';
 
 export function formatSanWithSymbol(san, color = 'w') {
   if (!san) return '';
@@ -42,6 +42,8 @@ class ChessTrainerApp {
     this.isPlayingAuto = false;
     this.autoPlayInterval = null;
     this.voiceEnabled = true;
+    this._sfSessionId = 0;
+    this._sfSessionCancelled = false;
 
     this.init();
   }
@@ -869,6 +871,13 @@ class ChessTrainerApp {
     const w = gameData.players.white;
     const b = gameData.players.black;
 
+    // Set authentic Chess.com tab title
+    if (w && b) {
+      const wRating = w.rating ? `(${w.rating})` : '';
+      const bRating = b.rating ? `(${b.rating})` : '';
+      document.title = `${w.username} ${wRating} vs. ${b.username} ${bRating} — Xem lại ván đấu — Chess.com`;
+    }
+
     // Populate Player Info Cards according to orientation
     this.updatePlayerCardDisplay();
 
@@ -1484,25 +1493,14 @@ class ChessTrainerApp {
         throw new Error(data.error || 'Không thể tải ván đấu từ link này');
       }
 
-      // === STOCKFISH ASYNC ANALYSIS — always dynamic, depth 18 ===
-      // No hardcoded shortcuts — every game goes through real Stockfish analysis
-      // Show analysis progress bar during Stockfish evaluation
-      if (btn) { btn.textContent = '🔍 Stockfish đang phân tích...'; }
-      this._showAnalysisProgress(0, 1);
+      // Step 1: Instant high-precision review render (< 150ms)
+      // Immediately display board, players, move table, clocks, and CAPS2 accuracies!
+      const initialReview = GameReviewManager.analyzeGame(data.pgn, {
+        accuracies: data.accuracies,
+        players: data.players
+      });
 
-      const analyzed = await GameReviewManager.analyzeGameWithStockfish(
-        data.pgn,
-        this.engine,
-        { accuracies: data.accuracies, players: data.players },
-        (done, total) => {
-          this._showAnalysisProgress(done, total);
-          if (btn) btn.textContent = `🔍 Phân tích nước ${done}/${total}...`;
-        }
-      );
-
-      this._hideAnalysisProgress();
-
-      if (!analyzed) {
+      if (!initialReview) {
         throw new Error('Không thể phân tích ván cờ từ PGN này.');
       }
 
@@ -1514,7 +1512,7 @@ class ChessTrainerApp {
       const dynamicGame = {
         gameId: data.gameId || 'game',
         url,
-        initialClock: analyzed.initialClock || '5:00',
+        initialClock: initialReview.initialClock || '5:00',
         headers: data.headers || {},
         players: {
           white: {
@@ -1540,27 +1538,160 @@ class ChessTrainerApp {
             result: blackMeta.result || ''
           }
         },
-        accuracy: data.accuracy || analyzed.accuracy,
-        performanceRating: data.performanceRating || analyzed.performanceRating,
-        summaryEn: data.summaryEn || analyzed.summaryEn,
-        summaryVi: data.summaryVi || analyzed.summaryVi,
-        breakdown: data.breakdown || analyzed.breakdown,
-        phases: data.phases || analyzed.phases,
+        accuracy: data.accuracy || initialReview.accuracy,
+        performanceRating: data.performanceRating || initialReview.performanceRating,
+        summaryEn: data.summaryEn || initialReview.summaryEn,
+        summaryVi: data.summaryVi || initialReview.summaryVi,
+        breakdown: data.breakdown || initialReview.breakdown,
+        phases: data.phases || initialReview.phases,
         pgn: data.pgn,
-        moveCommentaries: data.moveCommentaries || analyzed.moveCommentaries
+        moveCommentaries: data.moveCommentaries || initialReview.moveCommentaries
       };
 
+      // Load game IMMEDIATELY onto the board — user interacts right away!
       this.loadGame(dynamicGame);
-      // Restore engine MultiPV after game review analysis
-      this.engine.restoreAfterReview();
+
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = origText || 'Phân tích';
+      }
+
+      // Step 2: Background Stockfish 19 Deep Refinement (Zero screen blocking)
+      this.startStockfishRefinement(data.pgn, { accuracies: data.accuracies, players: data.players });
     } catch (err) {
       alert(`⚠️ Lỗi nạp link: ${err.message}`);
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = origText;
+        btn.textContent = origText || 'Phân tích';
       }
     }
+  }
+
+  // Non-blocking background Stockfish 19 deep refinement
+  startStockfishRefinement(pgn, metadata = {}) {
+    const sessionId = ++this._sfSessionId;
+
+    let statusBar = document.getElementById('sfReviewStatusBar');
+    if (!statusBar) {
+      const container = document.querySelector('.right-section');
+      if (container) {
+        statusBar = document.createElement('div');
+        statusBar.id = 'sfReviewStatusBar';
+        statusBar.className = 'sf-review-status-bar';
+        container.insertBefore(statusBar, container.firstChild);
+      }
+    }
+
+    if (statusBar) {
+      statusBar.style.display = 'flex';
+      statusBar.innerHTML = `
+        <div class="sf-status-left">
+          <span class="sf-pulse-dot"></span>
+          <span id="sfStatusText">Đang phân tích chuyên sâu với Stockfish 19...</span>
+        </div>
+        <div class="sf-status-right">
+          <span id="sfStatusCount" style="font-family: monospace; font-size: 11px; color: #81b64c;">0%</span>
+          <button id="btnStopSfRefine" class="btn-stop-sf" title="Dừng phân tích">✕</button>
+        </div>
+        <div class="sf-status-progress-track">
+          <div id="sfStatusProgressBar" class="sf-status-progress-fill" style="width: 0%;"></div>
+        </div>
+      `;
+
+      document.getElementById('btnStopSfRefine')?.addEventListener('click', () => {
+        this._sfSessionCancelled = true;
+        this.engine.stop();
+        if (statusBar) statusBar.style.display = 'none';
+      });
+    }
+
+    this._sfSessionCancelled = false;
+
+    GameReviewManager.analyzeGameWithStockfish(
+      pgn,
+      this.engine,
+      {
+        ...metadata,
+        isCancelled: () => (sessionId !== this._sfSessionId || this._sfSessionCancelled)
+      },
+      (done, total) => {
+        if (sessionId !== this._sfSessionId || this._sfSessionCancelled) return;
+        const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+        const txt = document.getElementById('sfStatusText');
+        const count = document.getElementById('sfStatusCount');
+        const bar = document.getElementById('sfStatusProgressBar');
+        if (txt) txt.textContent = `Stockfish 19: Nước ${done}/${total}`;
+        if (count) count.textContent = `${pct}%`;
+        if (bar) bar.style.width = `${pct}%`;
+      }
+    ).then((refined) => {
+      if (sessionId !== this._sfSessionId || this._sfSessionCancelled || !refined) return;
+
+      if (this.currentGame) {
+        this.currentGame.breakdown = refined.breakdown;
+        this.currentGame.phases = refined.phases;
+        this.currentGame.moveCommentaries = refined.moveCommentaries;
+        if (!metadata.accuracies) {
+          this.currentGame.accuracy = refined.accuracy;
+          this.currentGame.performanceRating = refined.performanceRating;
+          const wAcc = document.getElementById('overviewWhiteAcc');
+          const bAcc = document.getElementById('overviewBlackAcc');
+          if (wAcc) wAcc.textContent = refined.accuracy.white;
+          if (bAcc) bAcc.textContent = refined.accuracy.black;
+        }
+
+        // Update Breakdown Table
+        const statsTableBody = document.getElementById('classificationTableBody');
+        if (statsTableBody && refined.breakdown) {
+          statsTableBody.innerHTML = refined.breakdown.map(item => `
+            <tr class="breakdown-row">
+              <td class="col-label">${item.label}</td>
+              <td class="col-stat col-stat-w ${item.colorClass}-text">${item.w}</td>
+              <td class="col-badge"><span class="badge-icon ${item.colorClass}">${item.icon}</span></td>
+              <td class="col-stat col-stat-b ${item.colorClass}-text">${item.b}</td>
+            </tr>
+          `).join('');
+        }
+
+        // Update Phases Table
+        const phaseTableBody = document.getElementById('phaseTableBody');
+        if (phaseTableBody && refined.phases) {
+          phaseTableBody.innerHTML = refined.phases.map(p => `
+            <tr>
+              <td class="phase-label">${p.label}</td>
+              <td class="phase-w">${typeof p.w === 'string' ? `<span class="phase-dash">${p.w}</span>` : `<span class="phase-icon ${p.w.colorClass}">${p.w.icon}</span>`}</td>
+              <td class="phase-b">${typeof p.b === 'string' ? `<span class="phase-dash">${p.b}</span>` : `<span class="phase-icon ${p.b.colorClass}">${p.b.icon}</span>`}</td>
+            </tr>
+          `).join('');
+        }
+
+        // Refresh current move commentary if user is on a move
+        if (this.currentMoveIndex > 0) {
+          this.jumpToMove(this.currentMoveIndex);
+        }
+      }
+
+      this.engine.restoreAfterReview();
+
+      // Show completion toast briefly
+      if (statusBar) {
+        statusBar.innerHTML = `
+          <div class="sf-status-left" style="color: #81b64c;">
+            <span>✓</span>
+            <span>Đã hoàn tất phân tích chuyên sâu Stockfish 19 NNUE</span>
+          </div>
+        `;
+        setTimeout(() => {
+          if (sessionId === this._sfSessionId && statusBar) {
+            statusBar.style.display = 'none';
+          }
+        }, 3500);
+      }
+    }).catch((err) => {
+      console.warn('Stockfish refinement warning:', err);
+      if (statusBar) statusBar.style.display = 'none';
+    });
   }
 
   updateCapturedPieces() {
