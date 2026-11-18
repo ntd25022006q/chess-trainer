@@ -128,8 +128,30 @@ class ChessTrainerApp {
     const pathMatch = window.location.pathname.match(/(?:game\/live|analysis\/game\/live)\/(\d+)/);
     if (pathMatch) {
       const gid = pathMatch[1];
+      const targetUrl = `https://www.chess.com/game/live/${gid}`;
+      const urlInput = document.getElementById('topGameUrlInput');
+      if (urlInput) urlInput.value = targetUrl;
+
+      // Clean loading placeholder preventing player metadata flash
+      const blackUname = document.getElementById('blackPlayerName');
+      const whiteUname = document.getElementById('whitePlayerName');
+      const blackElo = document.getElementById('blackEloTag');
+      const whiteElo = document.getElementById('whiteEloTag');
+      const blackFlag = document.getElementById('blackFlagTag');
+      const whiteFlag = document.getElementById('whiteFlagTag');
+      const blackTitle = document.getElementById('blackTitleTag');
+      const whiteTitle = document.getElementById('whiteTitleTag');
+      if (blackUname) blackUname.textContent = 'Đang tải...';
+      if (whiteUname) whiteUname.textContent = 'Đang tải...';
+      if (blackElo) blackElo.textContent = '';
+      if (whiteElo) whiteElo.textContent = '';
+      if (blackFlag) blackFlag.style.display = 'none';
+      if (whiteFlag) whiteFlag.style.display = 'none';
+      if (blackTitle) blackTitle.style.display = 'none';
+      if (whiteTitle) whiteTitle.style.display = 'none';
+
       // Always use real Stockfish analysis — never hardcoded shortcuts
-      this.importFromUrl(`https://www.chess.com/game/live/${gid}`);
+      this.importFromUrl(targetUrl);
     } else {
       // Default: load with real analysis
       this.importFromUrl(`https://www.chess.com/game/live/173033536202`);
@@ -577,7 +599,8 @@ class ChessTrainerApp {
       'thailand': 'th', 'th': 'th', '🇹🇭': 'th',
       'japan': 'jp', 'jp': 'jp', '🇯🇵': 'jp',
       'south korea': 'kr', 'korea': 'kr', 'kr': 'kr', '🇰🇷': 'kr',
-      'mongolia': 'mn', 'mn': 'mn', '🇲🇳': 'mn'
+      'mongolia': 'mn', 'mn': 'mn', '🇲🇳': 'mn',
+      'belarus': 'by', 'by': 'by', '🇧🇾': 'by'
     };
     const key = String(countryOrCode).toLowerCase().trim();
     const iso = codeMap[key] || (key.length === 2 ? key : 'un');
@@ -588,9 +611,10 @@ class ChessTrainerApp {
       ru: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16" width="18" height="13" class="country-flag-img"><rect width="22" height="5.33" fill="#ffffff"/><rect y="5.33" width="22" height="5.33" fill="#0039a6"/><rect y="10.66" width="22" height="5.33" fill="#d52b1e"/></svg>`,
       vn: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16" width="18" height="13" class="country-flag-img"><rect width="22" height="16" fill="#da251d"/><polygon points="11,2.8 12.8,8.2 18.5,8.2 13.9,11.5 15.6,16.8 11,13.5 6.4,16.8 8.1,11.5 3.5,8.2 9.2,8.2" fill="#ffff00"/></svg>`,
       us: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16" width="18" height="13" class="country-flag-img"><rect width="22" height="16" fill="#b22234"/><rect y="1.23" width="22" height="1.23" fill="#fff"/><rect y="3.69" width="22" height="1.23" fill="#fff"/><rect y="6.15" width="22" height="1.23" fill="#fff"/><rect y="8.61" width="22" height="1.23" fill="#fff"/><rect y="11.07" width="22" height="1.23" fill="#fff"/><rect y="13.53" width="22" height="1.23" fill="#fff"/><rect width="8.8" height="8.61" fill="#3c3b6e"/></svg>`,
-      bg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16" width="18" height="13" class="country-flag-img"><rect width="22" height="5.33" fill="#ffffff"/><rect y="5.33" width="22" height="5.33" fill="#00966e"/><rect y="10.66" width="22" height="5.33" fill="#d62612"/></svg>`
+      bg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16" width="18" height="13" class="country-flag-img"><rect width="22" height="5.33" fill="#ffffff"/><rect y="5.33" width="22" height="5.33" fill="#00966e"/><rect y="10.66" width="22" height="5.33" fill="#d62612"/></svg>`,
+      by: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16" width="18" height="13" class="country-flag-img"><rect width="22" height="10.66" fill="#c8313a"/><rect y="10.66" width="22" height="5.34" fill="#4aa658"/><rect width="3.5" height="16" fill="#ffffff"/><path d="M1.75,0 L3.5,2 L1.75,4 L0,2 Z M1.75,4 L3.5,6 L1.75,8 L0,6 Z M1.75,8 L3.5,10 L1.75,12 L0,10 Z M1.75,12 L3.5,14 L1.75,16 L0,14 Z" fill="#c8313a"/></svg>`
     };
-    const flagSvg = inlineSvgs[iso] || `<img src="/assets/flags/${iso}.svg" class="country-flag-img" alt="${upper}" onerror="if(!this.dataset.retried){this.dataset.retried=1;this.src='/assets/flags/${iso}.png';}else if(this.dataset.retried==1){this.dataset.retried=2;this.src='https://flagcdn.com/w40/${iso}.png';}else{this.style.display='none';}">`;
+    const flagSvg = inlineSvgs[iso] || `<img src="/assets/flags/${iso}.svg" class="country-flag-img" alt="${upper}" onerror="if(!this.dataset.retried){this.dataset.retried=1;this.src='/assets/flags/${iso}.png';}else if(this.dataset.retried==1){this.dataset.retried=2;this.src='/api/proxy-image?url='+encodeURIComponent('https://flagcdn.com/w40/${iso}.png');}else{this.style.display='none';}">`;
     return `<span class="player-country-badge">${flagSvg}<span class="country-code-text">${upper}</span></span>`;
   }
 
@@ -1732,9 +1756,9 @@ class ChessTrainerApp {
       captured.sort((a, b) => order[a.type] - order[b.type]);
 
       let html = captured.map(p => {
-        // Display crisp white silhouettes matching Chess.com dark theme
-        const pieceKey = `w${p.type.toUpperCase()}`;
-        return `<img src="/assets/pieces/${pieceKey}.svg" class="mini-piece" alt="">`;
+        // Display authentic piece SVG matching the captured piece's true color
+        const pieceKey = `${p.color}${p.type.toUpperCase()}`;
+        return `<img src="/assets/pieces/${pieceKey}.svg" class="mini-piece ${p.color}" alt="">`;
       }).join('');
       if (diff > 0) {
         html += `<span class="material-lead">+${diff}</span>`;

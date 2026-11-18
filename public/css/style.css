@@ -753,18 +753,15 @@ body.dark-theme {
 .coach-speech-bubble {
   background: #ffffff;
   color: #1e1e1e;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 12px;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
   position: relative;
   flex: 1;
-  height: 72px;
-  min-height: 72px;
-  max-height: 72px;
+  min-height: 76px;
   box-sizing: border-box;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1087,9 +1084,7 @@ body.dark-theme {
   display: flex;
   gap: 12px;
   align-items: center;
-  height: 84px;
   min-height: 84px;
-  max-height: 84px;
   box-sizing: border-box;
 }
 
@@ -1524,8 +1519,16 @@ body.dark-theme {
   gap: 6px;
 }
 
-.walkthrough-move-btn:hover { background: var(--bg-card); }
-.walkthrough-move-btn.active { background: #81b64c !important; color: #fff; font-weight: 700; }
+.walkthrough-move-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.walkthrough-move-btn.active {
+  background: #3b3834 !important;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 #81b64c;
+}
 
 .badge-tag {
   display: inline-flex;

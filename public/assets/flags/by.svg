@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 16" width="18" height="13" class="country-flag-img">
+  <rect width="22" height="10.66" fill="#c8313e"/>
+  <rect y="10.66" width="22" height="5.34" fill="#00965e"/>
+  <rect width="4.5" height="16" fill="#ffffff"/>
+  <path d="M2.25 1 L3.75 2.5 L2.25 4 L0.75 2.5 Z M2.25 5 L3.75 6.5 L2.25 8 L0.75 6.5 Z M2.25 9 L3.75 10.5 L2.25 12 L0.75 10.5 Z M2.25 13 L3.75 14.5 L2.25 16 L0.75 14.5 Z" fill="#c8313e"/>
+</svg>
