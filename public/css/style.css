@@ -1579,6 +1579,12 @@ body.dark-theme {
 .btn-board-flip-prominent svg {
   fill: currentColor;
 }
+
+.btn-sub-action {
+  background: #2b2824;
+  border: 1px solid #3f3b35;
+  color: #bababa;
+  padding: 8px 12px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;

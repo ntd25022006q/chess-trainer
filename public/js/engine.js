@@ -435,4 +435,17 @@ export class StockfishEngine {
     this.sendCommand('ucinewgame');
     this.sendCommand('isready');
   }
+
+  destroy() {
+    this.stop();
+    if (this.worker) {
+      try {
+        this.worker.terminate();
+      } catch (_) {}
+      this.worker = null;
+    }
+    if (this.evalCache) {
+      this.evalCache.clear();
+    }
+  }
 }

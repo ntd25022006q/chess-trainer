@@ -1,4 +1,5 @@
 // Comprehensive Deep Code Hygiene, Memory Leak & Edge-Case Stress Test Suite
+import fs from 'fs';
 import { Chess } from './public/lib/chess.js';
 import { GameReviewManager, OPENING_BOOK } from './public/js/gameReview.js';
 import { StockfishEngine } from './public/js/engine.js';
@@ -88,5 +89,38 @@ if (typeof chessAudio.playMove === 'function' && typeof chessAudio.playCapture =
   chessAudio.playGameEnd();
   console.log('✅ All 6 Web Audio synthesizer methods executed without exceptions in headless mode!');
 }
+
+// --- 6. Testing CSS Integrity & Engine Lifecycle Management ---
+console.log('\n--- 6. Testing CSS Integrity & Engine Lifecycle Management ---');
+const rawCss = fs.readFileSync('public/css/style.css', 'utf8');
+const linesCss = rawCss.split('\n');
+let depth = 0;
+let inComment = false;
+for (let i = 0; i < linesCss.length; i++) {
+  const line = linesCss[i];
+  for (let j = 0; j < line.length; j++) {
+    if (!inComment && line[j] === '/' && line[j+1] === '*') { inComment = true; j++; continue; }
+    if (inComment && line[j] === '*' && line[j+1] === '/') { inComment = false; j++; continue; }
+    if (!inComment) {
+      if (line[j] === '{') depth++;
+      else if (line[j] === '}') {
+        depth--;
+        if (depth < 0) throw new Error(`Extra closing brace found at style.css line ${i + 1}`);
+      }
+    }
+  }
+}
+if (depth !== 0) throw new Error(`Unbalanced CSS braces in style.css! Remaining open: ${depth}`);
+if (!rawCss.includes('.btn-sub-action {')) throw new Error('Missing .btn-sub-action { rule in style.css');
+console.log('✅ style.css syntax & brace balance 100% verified!');
+
+// Test StockfishEngine destroy method
+const destroyEngine = new StockfishEngine();
+destroyEngine.evalCache.set('test-fen', { score: 100 });
+destroyEngine.destroy();
+if (destroyEngine.evalCache.size !== 0) {
+  throw new Error('StockfishEngine destroy did not clear evalCache!');
+}
+console.log('✅ StockfishEngine destroy() lifecycle & cache cleanup verified!');
 
 console.log('\n=== ALL DEEP HYGIENE, MEMORY & EDGE-CASE TESTS PASSED 100%! ===');
