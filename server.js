@@ -440,13 +440,28 @@ app.post('/api/import-game', async (req, res) => {
       });
     }
 
-    // 2. Handle Chess.com URL
-    if (trimmedUrl.includes('chess.com/')) {
-      const match = trimmedUrl.match(/(?:game\/live|analysis\/game\/live|game\/daily)\/(\d+)/);
-      if (!match) {
+    // 1b. Handle Raw PGN text pasted directly into search
+    if (trimmedUrl.startsWith('[') || /1\.\s*[a-zA-Z]/.test(trimmedUrl)) {
+      return res.json({
+        success: true,
+        source: 'PGN',
+        gameId: 'custom_' + Date.now(),
+        pgn: trimmedUrl
+      });
+    }
+
+    // 2. Handle Chess.com URL or bare numeric Game ID (e.g. 188647699041)
+    if (trimmedUrl.includes('chess.com/') || /^\d{8,15}$/.test(trimmedUrl)) {
+      let gameId = null;
+      if (/^\d{8,15}$/.test(trimmedUrl)) {
+        gameId = trimmedUrl;
+      } else {
+        const match = trimmedUrl.match(/(?:game\/live|analysis\/game\/live|game\/daily)\/(\d+)/);
+        if (match) gameId = match[1];
+      }
+      if (!gameId) {
         return res.status(400).json({ error: 'Không tìm thấy Game ID Chess.com trong URL' });
       }
-      const gameId = match[1];
 
       // Check local game JSON file if available
       const localGameFile = path.join(__dirname, `game_${gameId}.json`);
