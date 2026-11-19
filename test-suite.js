@@ -495,7 +495,7 @@ async function run() {
     throw new Error('Player country badge must contain flag + text code with non-breaking onerror hiding!');
   }
   // 15.4 Verify cache buster
-  if (!/app\.js\?v=[456789]\.[0-9]/.test(home.text) || !/gameReview\.js\?v=[456789]\.[0-9]/.test(appCode)) {
+  if (!/app\.js\?v=(?:[456789]|1[0-9])\.[0-9]/.test(home.text) || !/gameReview\.js\?v=(?:[456789]|1[0-9])\.[0-9]/.test(appCode)) {
     throw new Error('Cache busting query strings must be present across index.html and module imports!');
   }
   console.log('✅ Multi-move trial context, robust flag badges, and depth-guarded re-verification verified!');

@@ -1,11 +1,11 @@
 import { Chess } from '../lib/chess.js';
-import { StockfishEngine } from './engine.js?v=9.5';
-import { ChessBoardUI } from './board.js?v=9.5';
-import { chessAudio } from './audio.js?v=9.5';
-import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=9.5';
-import { AdvantageChart } from './chart.js?v=9.5';
-import { GameReviewManager } from './gameReview.js?v=9.5';
-import { chessComApi } from './chessComApi.js?v=9.5';
+import { StockfishEngine } from './engine.js?v=10.1';
+import { ChessBoardUI } from './board.js?v=10.1';
+import { chessAudio } from './audio.js?v=10.1';
+import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=10.1';
+import { AdvantageChart } from './chart.js?v=10.1';
+import { GameReviewManager } from './gameReview.js?v=10.1';
+import { chessComApi } from './chessComApi.js?v=10.1';
 
 export function formatSanWithSymbol(san, color = 'w') {
   if (!san) return '';
@@ -828,7 +828,7 @@ class ChessTrainerApp {
             <img src="/assets/chesscom-logo.svg" alt="Chess.com" width="46" height="46" style="animation: chessGlow 2s ease-in-out infinite;">
           </div>
           <div style="font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px; margin-bottom: 6px;">Đang xem lại ván đấu...</div>
-          <div style="font-size: 13px; color: #9e9c98; margin-bottom: 22px; font-weight: 500;">Stockfish 16 NNUE • Đánh giá độ chính xác CAPS2</div>
+          <div style="font-size: 13px; color: #9e9c98; margin-bottom: 22px; font-weight: 500;">Stockfish 19 NNUE • Đánh giá độ chính xác CAPS2</div>
           <div style="background: #1b1917; border: 1px solid #312e2b; border-radius: 4px; height: 8px; overflow: hidden; margin-bottom: 12px;">
             <div id="sfProgressBar" style="height: 100%; width: 0%; background: #81b64c; border-radius: 4px; transition: width 0.12s linear;"></div>
           </div>

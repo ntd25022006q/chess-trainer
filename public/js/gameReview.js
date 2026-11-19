@@ -303,7 +303,9 @@ const PESTO_EG_TABLES = {
 export class GameReviewManager {
   // Ultra-Fast Grandmaster-Level PeSTO Evaluation (<0.05ms)
   static evaluatePeSTO(chess) {
-    if (chess.isCheckmate()) return chess.turn() === 'w' ? -20000 : 20000;
+    if (chess.inCheck()) {
+      if (chess.isCheckmate()) return chess.turn() === 'w' ? -20000 : 20000;
+    }
     if (chess.isDraw()) return 0;
 
     const board = chess.board();
@@ -2046,7 +2048,7 @@ export class GameReviewManager {
         const legalMoves = tempChess.moves({ verbose: true });
         const scoredMoves = [];
         for (const lm of legalMoves) {
-          tempChess.move(lm.san);
+          tempChess.move(lm);
           const testCp = this.evaluatePeSTO(tempChess);
           tempChess.undo();
           scoredMoves.push({ move: lm, cp: testCp });
@@ -2132,7 +2134,7 @@ export class GameReviewManager {
         const oppMoves = tempChess.moves({ verbose: true });
         let bestOppEval = (side === 'w') ? 999999 : -999999;
         for (const om of oppMoves) {
-          tempChess.move(om.san);
+          tempChess.move(om);
           const oppCp = this.evaluatePeSTO(tempChess);
           tempChess.undo();
           if (side === 'w') {
