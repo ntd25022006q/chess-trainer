@@ -31,8 +31,143 @@ export const OPENING_BOOK = {
   'Bg2': { vi: 'Tượng fianchetto kiểm soát đường chéo lớn.', en: 'Fianchettoed bishop on long diagonal.' },
   'O-O': { vi: 'Nhập thành an toàn đưa Vua vào vị trí bảo vệ.', en: 'Castles kingside to tuck the King away.' },
   'O-O-O': { vi: 'Nhập thành xa chuẩn bị bão tốt cánh vua.', en: 'Queenside castling initiating aggressive opposite-side attacks.' },
-  'Re8': { vi: 'Xe e8 chiếm cột mở trung tâm.', en: 'Rook to e8 takes open file pressure.' }
+  'Re8': { vi: 'Xe e8 chiếm cột mở trung tâm.', en: 'Rook to e8 takes open file pressure.' },
+  'd6': { vi: 'Củng cố tốt e5 hoặc dọn đường phát triển tượng c8.', en: 'Solidifies the pawn structure and opens diagonal for bishop.' },
+  'g6': { vi: 'Chuẩn bị xếp tượng fianchetto lên g7.', en: 'Prepares kingside fianchetto for bishop on g7.' },
+  'Bg7': { vi: 'Tượng g7 kiểm soát đường chéo dài trung tâm.', en: 'Fianchettoed bishop exerts powerful diagonal pressure.' },
+  'Be7': { vi: 'Phát triển tượng e7 chuẩn bị nhập thành.', en: 'Solid development preparing kingside castling.' },
+  'Bd7': { vi: 'Phát triển tượng d7 kết nối quân nhẹ.', en: 'Develops bishop and helps connect queenside pieces.' },
+  'Bd6': { vi: 'Tượng d6 kiểm soát các ô trung tâm quan trọng.', en: 'Bishop controls key central squares from d6.' },
+  'Bc5': { vi: 'Phát triển tượng c5 nhắm vào điểm yếu f2.', en: 'Active development targeting the f2 square.' },
+  'Bb4': { vi: 'Ghim mã c3 theo bài bản Nimzo-Indian / Pin Variation.', en: 'Pins knight on c3 in the spirit of Nimzo-Indian.' },
+  'Bb4+': { vi: 'Chiếu tượng kiểm tra phản ứng của Trắng.', en: 'Checks king and invites piece interposition.' },
+  'a6': { vi: 'Ngăn tượng hoặc mã đối phương xâm nhập ô b5.', en: 'Prevents enemy pieces from occupying b5.' },
+  'h6': { vi: 'Kiểm soát ô g5 và tạo ô thoát hiểm cho Vua.', en: 'Controls g5 and creates a flight square for the King.' },
+  'c3': { vi: 'Củng cố tốt trung tâm d4 theo biến Alapin / Giuoco Piano.', en: 'Reinforces the d4 square.' },
+  'd3': { vi: 'Củng cố e4 vững chắc, mở đường cho tượng c1.', en: 'Solid pawn support for e4 and frees the c1 bishop.' },
+  'f4': { vi: 'Đẩy tốt f4 gây áp lực lên trung tâm.', en: 'Aggressive pawn push contesting central control.' },
+  'b3': { vi: 'Chuẩn bị xếp tượng cánh hậu lên b2.', en: 'Prepares queenside fianchetto.' },
+  'Bb2': { vi: 'Tượng b2 kiểm soát đường chéo lớn cánh hậu.', en: 'Fianchettoed queen bishop controlling the long diagonal.' },
+  'Bg5': { vi: 'Tượng g5 ghim mã f6 vào Hậu đối phương.', en: 'Pins knight on f6 against the enemy Queen.' },
+  'Bf4': { vi: 'Tượng f4 chủ động chiếm lĩnh đường chéo trung tâm.', en: 'Active bishop placement along the central diagonal.' },
+  'Be3': { vi: 'Tượng e3 củng cố trung tâm và bảo vệ d4.', en: 'Solid bishop development defending d4.' },
+  'Nbd7': { vi: 'Phát triển mã d7 không cản trở cấu trúc tốt c6.', en: 'Flexible knight development preserving pawn options.' },
+  'Nbd2': { vi: 'Phát triển mã d2 hỗ trợ kiểm soát ô e4.', en: 'Knight develops to support e4 without blocking c-pawn.' },
+  'cxd4': { vi: 'Đổi tốt c5 lấy d4 chiếm cột mở c trong Sicilian.', en: 'Exchanges on d4 to open the c-file in Sicilian Defense.' },
+  'Nxd4': { vi: 'Mã ăn lại trên d4 chiếm vị trí trung tâm thống trị.', en: 'Knight recaptures to establish strong central outpost.' },
+  'cxd5': { vi: 'Đổi tốt d5 mở cột trung tâm.', en: 'Exchanges on d5 opening the central file.' },
+  'Nxd5': { vi: 'Mã ăn d5 chiếm cứ điểm cơ động.', en: 'Knight recaptures centrally.' }
 };
+
+// Comprehensive ECO Opening Encyclopedia (Chess.com Official Taxonomy)
+export const ECO_CATALOG = [
+  { prefix: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6', eco: 'B90', nameEn: 'Sicilian Defense: Najdorf Variation', nameVi: 'Phòng thủ Sicilian: Biến Najdorf' },
+  { prefix: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 g6', eco: 'B70', nameEn: 'Sicilian Defense: Dragon Variation', nameVi: 'Phòng thủ Sicilian: Biến Rồng' },
+  { prefix: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6', eco: 'B80', nameEn: 'Sicilian Defense: Scheveningen Variation', nameVi: 'Phòng thủ Sicilian: Biến Scheveningen' },
+  { prefix: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 Nc6', eco: 'B56', nameEn: 'Sicilian Defense: Classical Variation', nameVi: 'Phòng thủ Sicilian: Biến Cổ Điển' },
+  { prefix: 'e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 g6', eco: 'B35', nameEn: 'Sicilian Defense: Accelerated Dragon', nameVi: 'Phòng thủ Sicilian: Rồng Tăng Tốc' },
+  { prefix: 'e4 c5 Nf3 Nc6 Bb5', eco: 'B30', nameEn: 'Sicilian Defense: Rossolimo Attack', nameVi: 'Phòng thủ Sicilian: Tấn công Rossolimo' },
+  { prefix: 'e4 c5 Nf3 e6 d4 cxd4 Nxd4 a6', eco: 'B41', nameEn: 'Sicilian Defense: Kan Variation', nameVi: 'Phòng thủ Sicilian: Biến Kan' },
+  { prefix: 'e4 c5 Nf3 e6 d4 cxd4 Nxd4 Nc6', eco: 'B44', nameEn: 'Sicilian Defense: Taimanov Variation', nameVi: 'Phòng thủ Sicilian: Biến Taimanov' },
+  { prefix: 'e4 c5 c3', eco: 'B22', nameEn: 'Sicilian Defense: Alapin Variation', nameVi: 'Phòng thủ Sicilian: Biến Alapin' },
+  { prefix: 'e4 c5 Nc3', eco: 'B23', nameEn: 'Sicilian Defense: Closed Variation', nameVi: 'Phòng thủ Sicilian: Biến Kín' },
+  { prefix: 'e4 c5', eco: 'B20', nameEn: 'Sicilian Defense', nameVi: 'Phòng thủ Sicilian' },
+
+  { prefix: 'e4 e6 d4 d5 Nc3 Bb4', eco: 'C15', nameEn: 'French Defense: Winawer Variation', nameVi: 'Phòng thủ Pháp: Biến Winawer' },
+  { prefix: 'e4 e6 d4 d5 Nc3 Nf6', eco: 'C14', nameEn: 'French Defense: Classical Variation', nameVi: 'Phòng thủ Pháp: Biến Cổ Điển' },
+  { prefix: 'e4 e6 d4 d5 Nd2', eco: 'C03', nameEn: 'French Defense: Tarrasch Variation', nameVi: 'Phòng thủ Pháp: Biến Tarrasch' },
+  { prefix: 'e4 e6 d4 d5 e5', eco: 'C02', nameEn: 'French Defense: Advance Variation', nameVi: 'Phòng thủ Pháp: Biến Tiến' },
+  { prefix: 'e4 e6 d4 d5 exd5', eco: 'C01', nameEn: 'French Defense: Exchange Variation', nameVi: 'Phòng thủ Pháp: Biến Đổi' },
+  { prefix: 'e4 e6', eco: 'C00', nameEn: 'French Defense', nameVi: 'Phòng thủ Pháp' },
+
+  { prefix: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5', eco: 'B18', nameEn: 'Caro-Kann Defense: Classical Variation', nameVi: 'Phòng thủ Caro-Kann: Biến Cổ Điển' },
+  { prefix: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nd7', eco: 'B17', nameEn: 'Caro-Kann Defense: Karpov Variation', nameVi: 'Phòng thủ Caro-Kann: Biến Karpov' },
+  { prefix: 'e4 c6 d4 d5 e5', eco: 'B12', nameEn: 'Caro-Kann Defense: Advance Variation', nameVi: 'Phòng thủ Caro-Kann: Biến Tiến' },
+  { prefix: 'e4 c6 d4 d5 exd5 cxd5', eco: 'B13', nameEn: 'Caro-Kann Defense: Exchange Variation', nameVi: 'Phòng thủ Caro-Kann: Biến Đổi' },
+  { prefix: 'e4 c6', eco: 'B10', nameEn: 'Caro-Kann Defense', nameVi: 'Phòng thủ Caro-Kann' },
+
+  { prefix: 'e4 d5 exd5 Qxd5 Nc3 Qa5', eco: 'B01', nameEn: 'Scandinavian Defense: Mieses-Kotrč Variation', nameVi: 'Phòng thủ Scandinavian: Biến Mieses-Kotrč' },
+  { prefix: 'e4 d5 exd5 Qxd5 Nc3 Qd6', eco: 'B01', nameEn: 'Scandinavian Defense: Gubinsky-Melts Variation', nameVi: 'Phòng thủ Scandinavian: Biến Gubinsky-Melts' },
+  { prefix: 'e4 d5 exd5 Qxd5 Nc3 Qd8', eco: 'B01', nameEn: 'Scandinavian Defense: Main Line Retreat', nameVi: 'Phòng thủ Scandinavian: Biến Rút Hậu' },
+  { prefix: 'e4 d5 exd5 Nf6', eco: 'B01', nameEn: 'Scandinavian Defense: Modern Variation', nameVi: 'Phòng thủ Scandinavian: Biến Hiện Đại' },
+  { prefix: 'e4 d5', eco: 'B01', nameEn: 'Scandinavian Defense', nameVi: 'Phòng thủ Scandinavian' },
+
+  { prefix: 'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7', eco: 'C84', nameEn: 'Ruy Lopez: Closed Variation', nameVi: 'Khai cuộc Tây Ban Nha: Biến Kín' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Nxe4', eco: 'C80', nameEn: 'Ruy Lopez: Open Variation', nameVi: 'Khai cuộc Tây Ban Nha: Biến Mở' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bb5 a6 Bxc6', eco: 'C68', nameEn: 'Ruy Lopez: Exchange Variation', nameVi: 'Khai cuộc Tây Ban Nha: Biến Đổi' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bb5 Nf6', eco: 'C65', nameEn: 'Ruy Lopez: Berlin Defense', nameVi: 'Khai cuộc Tây Ban Nha: Phòng thủ Berlin' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bb5 Bc5', eco: 'C64', nameEn: 'Ruy Lopez: Classical Defense', nameVi: 'Khai cuộc Tây Ban Nha: Phòng thủ Cổ Điển' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bb5 d6', eco: 'C62', nameEn: 'Ruy Lopez: Steinitz Defense', nameVi: 'Khai cuộc Tây Ban Nha: Phòng thủ Steinitz' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bb5 f5', eco: 'C63', nameEn: 'Ruy Lopez: Schliemann Defense', nameVi: 'Khai cuộc Tây Ban Nha: Phòng thủ Schliemann' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bb5', eco: 'C60', nameEn: 'Ruy Lopez (Spanish Opening)', nameVi: 'Khai cuộc Tây Ban Nha (Ruy Lopez)' },
+
+  { prefix: 'e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4', eco: 'C54', nameEn: 'Italian Game: Classical Giuoco Piano', nameVi: 'Ván cờ Ý: Giuoco Piano Cổ Điển' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bc4 Bc5', eco: 'C50', nameEn: 'Italian Game: Giuoco Piano', nameVi: 'Ván cờ Ý: Giuoco Piano' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bc4 Nf6', eco: 'C55', nameEn: 'Italian Game: Two Knights Defense', nameVi: 'Ván cờ Ý: Phòng thủ Hai Mã' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bc4 Be7', eco: 'C50', nameEn: 'Italian Game: Hungarian Defense', nameVi: 'Ván cờ Ý: Phòng thủ Hungary' },
+  { prefix: 'e4 e5 Nf3 Nc6 Bc4', eco: 'C50', nameEn: 'Italian Game', nameVi: 'Ván cờ Ý' },
+
+  { prefix: 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5', eco: 'C45', nameEn: 'Scotch Game: Classical Variation', nameVi: 'Ván cờ Scotland: Biến Cổ Điển' },
+  { prefix: 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Nf6', eco: 'C45', nameEn: 'Scotch Game: Mieses Variation', nameVi: 'Ván cờ Scotland: Biến Mieses' },
+  { prefix: 'e4 e5 Nf3 Nc6 d4', eco: 'C45', nameEn: 'Scotch Game', nameVi: 'Ván cờ Scotland' },
+
+  { prefix: 'e4 e5 Nf3 Nf6 Nxe5 d6', eco: 'C42', nameEn: "Petrov's Defense: Classical Attack", nameVi: 'Phòng thủ Petrov (Cờ Nga)' },
+  { prefix: 'e4 e5 Nf3 Nf6', eco: 'C42', nameEn: "Petrov's Defense", nameVi: 'Phòng thủ Petrov' },
+
+  { prefix: 'e4 e5 f4 exf4', eco: 'C33', nameEn: "King's Gambit Accepted", nameVi: 'Gambit Vua Chấp Nhận' },
+  { prefix: 'e4 e5 f4 Bc5', eco: 'C30', nameEn: "King's Gambit Declined", nameVi: 'Gambit Vua Từ Chối' },
+  { prefix: 'e4 e5 f4', eco: 'C30', nameEn: "King's Gambit", nameVi: 'Gambit Vua' },
+
+  { prefix: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 Be7', eco: 'D53', nameEn: "Queen's Gambit Declined: Orthodox Defense", nameVi: 'Gambit Hậu Từ Chối: Biến Chính Thống' },
+  { prefix: 'd4 d5 c4 e6 Nc3 Nf6 cxd5 exd5', eco: 'D35', nameEn: "Queen's Gambit Declined: Exchange Variation", nameVi: 'Gambit Hậu Từ Chối: Biến Đổi' },
+  { prefix: 'd4 d5 c4 e6 Nc3 Nf6 Nf3 c5', eco: 'D32', nameEn: "Queen's Gambit Declined: Tarrasch Defense", nameVi: 'Gambit Hậu Từ Chối: Phòng thủ Tarrasch' },
+  { prefix: 'd4 d5 c4 e6', eco: 'D30', nameEn: "Queen's Gambit Declined", nameVi: 'Gambit Hậu Từ Chối' },
+
+  { prefix: 'd4 d5 c4 c6 Nf3 Nf6 Nc3 dxc4', eco: 'D15', nameEn: 'Slav Defense: Accepted', nameVi: 'Phòng thủ Slav: Chấp Nhận' },
+  { prefix: 'd4 d5 c4 c6 Nf3 Nf6 Nc3 e6', eco: 'D43', nameEn: 'Semi-Slav Defense', nameVi: 'Phòng thủ Bán Slav' },
+  { prefix: 'd4 d5 c4 c6', eco: 'D10', nameEn: 'Slav Defense', nameVi: 'Phòng thủ Slav' },
+
+  { prefix: 'd4 d5 c4 dxc4', eco: 'D20', nameEn: "Queen's Gambit Accepted", nameVi: 'Gambit Hậu Chấp Nhận' },
+
+  { prefix: 'd4 d5 Nf3 Nf6 Bf4', eco: 'D00', nameEn: 'London System', nameVi: 'Hệ thống London' },
+  { prefix: 'd4 Nf6 Nf3 g6 Bf4', eco: 'A48', nameEn: "London System vs King's Indian", nameVi: 'Hệ thống London đối Ấn Độ Vua' },
+  { prefix: 'd4 d5 Bf4', eco: 'D00', nameEn: 'London System', nameVi: 'Hệ thống London' },
+
+  { prefix: 'd4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5', eco: 'E97', nameEn: "King's Indian Defense: Classical Variation", nameVi: 'Phòng thủ Ấn Độ của Vua: Biến Cổ Điển' },
+  { prefix: 'd4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3', eco: 'E80', nameEn: "King's Indian Defense: Sämisch Variation", nameVi: 'Phòng thủ Ấn Độ của Vua: Biến Sämisch' },
+  { prefix: 'd4 Nf6 c4 g6 Nc3 Bg7 e4 d6', eco: 'E70', nameEn: "King's Indian Defense", nameVi: 'Phòng thủ Ấn Độ của Vua' },
+
+  { prefix: 'd4 Nf6 c4 g6 Nc3 d5 cxd5 Nxd5 e4 Nxc3 bxc3 Bg7', eco: 'D85', nameEn: 'Grünfeld Defense: Exchange Variation', nameVi: 'Phòng thủ Grünfeld: Biến Đổi' },
+  { prefix: 'd4 Nf6 c4 g6 Nc3 d5', eco: 'D80', nameEn: 'Grünfeld Defense', nameVi: 'Phòng thủ Grünfeld' },
+
+  { prefix: 'd4 Nf6 c4 e6 Nc3 Bb4', eco: 'E20', nameEn: 'Nimzo-Indian Defense', nameVi: 'Phòng thủ Nimzo-Indian' },
+  { prefix: 'd4 Nf6 c4 e6 Nf3 b6', eco: 'E12', nameEn: "Queen's Indian Defense", nameVi: 'Phòng thủ Ấn Độ của Hậu' },
+  { prefix: 'd4 Nf6 c4 e6 g3', eco: 'E00', nameEn: 'Catalan Opening', nameVi: 'Khai cuộc Catalan' },
+
+  { prefix: 'c4 e5', eco: 'A20', nameEn: "English Opening: King's English", nameVi: 'Khai cuộc Anh: Biến Vua' },
+  { prefix: 'c4 c5', eco: 'A30', nameEn: 'English Opening: Symmetrical', nameVi: 'Khai cuộc Anh: Đối Xứng' },
+  { prefix: 'c4', eco: 'A10', nameEn: 'English Opening', nameVi: 'Khai cuộc Anh' },
+  { prefix: 'Nf3 d5 g3', eco: 'A07', nameEn: "Réti Opening: King's Indian Attack", nameVi: 'Khai cuộc Réti' },
+  { prefix: 'Nf3', eco: 'A04', nameEn: 'Réti Opening', nameVi: 'Khai cuộc Réti' },
+  { prefix: 'e4', eco: 'B00', nameEn: "King's Pawn Opening", nameVi: 'Khai cuộc Tốt Vua' },
+  { prefix: 'd4', eco: 'A40', nameEn: "Queen's Pawn Opening", nameVi: 'Khai cuộc Tốt Hậu' }
+];
+
+// Detect deepest opening line from move history
+export function detectOpening(moves) {
+  if (!moves || moves.length === 0) {
+    return { eco: 'A00', nameEn: 'Standard Chess', nameVi: 'Cờ vua tiêu chuẩn' };
+  }
+  const sanList = moves.map(m => (typeof m === 'string' ? m : m.san));
+  const sanStr = sanList.join(' ');
+
+  for (const item of ECO_CATALOG) {
+    if (sanStr.startsWith(item.prefix)) {
+      return item;
+    }
+  }
+  return { eco: 'A00', nameEn: 'Standard Opening', nameVi: 'Khai cuộc Tiêu Chuẩn' };
+}
 
 // PeSTO's Piece-Square Tables (Tapered Evaluation MG/EG)
 const PESTO_MG_VALUE = { p: 82, n: 337, b: 365, r: 477, q: 1025, k: 0 };
@@ -481,6 +616,334 @@ export class GameReviewManager {
     return false;
   }
 
+  // Geometry helper: Find square of King of given color
+  static findKingSquare(chess, color) {
+    try {
+      const board = chess.board();
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const p = board[r][c];
+          if (p && p.type === 'k' && p.color === color) {
+            const file = String.fromCharCode(97 + c);
+            const rank = String(8 - r);
+            return file + rank;
+          }
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // Geometry helper: Check if two squares are aligned (rank, file, or diagonal)
+  static areAligned(sq1, sq2) {
+    if (!sq1 || !sq2 || sq1 === sq2) return false;
+    const f1 = sq1.charCodeAt(0) - 97, r1 = parseInt(sq1[1], 10);
+    const f2 = sq2.charCodeAt(0) - 97, r2 = parseInt(sq2[1], 10);
+    const df = Math.abs(f1 - f2);
+    const dr = Math.abs(r1 - r2);
+    return f1 === f2 || r1 === r2 || df === dr;
+  }
+
+  // Geometry helper: Get list of squares strictly between sq1 and sq2
+  static getRayBetween(sq1, sq2) {
+    if (!this.areAligned(sq1, sq2)) return null;
+    const f1 = sq1.charCodeAt(0) - 97, r1 = parseInt(sq1[1], 10);
+    const f2 = sq2.charCodeAt(0) - 97, r2 = parseInt(sq2[1], 10);
+    const df = Math.sign(f2 - f1);
+    const dr = Math.sign(r2 - r1);
+    const steps = Math.max(Math.abs(f2 - f1), Math.abs(r2 - r1));
+    const ray = [];
+    for (let s = 1; s < steps; s++) {
+      const f = String.fromCharCode(97 + f1 + s * df);
+      const r = String(r1 + s * dr);
+      ray.push(f + r);
+    }
+    return ray;
+  }
+
+  // Geometry helper: Get list of squares along ray extending beyond sq2 in direction from sq1
+  static getRayBeyond(sq1, sq2) {
+    if (!this.areAligned(sq1, sq2)) return null;
+    const f1 = sq1.charCodeAt(0) - 97, r1 = parseInt(sq1[1], 10);
+    const f2 = sq2.charCodeAt(0) - 97, r2 = parseInt(sq2[1], 10);
+    const df = Math.sign(f2 - f1);
+    const dr = Math.sign(r2 - r1);
+    const ray = [];
+    let curF = f2 + df;
+    let curR = r2 + dr;
+    while (curF >= 0 && curF < 8 && curR >= 1 && curR <= 8) {
+      ray.push(String.fromCharCode(97 + curF) + String(curR));
+      curF += df;
+      curR += dr;
+    }
+    return ray;
+  }
+
+  // Geometry helper: Find all friendly sliding pieces (b, r, q)
+  static findFriendlySliders(chess, color) {
+    const sliders = [];
+    try {
+      const board = chess.board();
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const p = board[r][c];
+          if (p && p.color === color && ['b', 'r', 'q'].includes(p.type)) {
+            const file = String.fromCharCode(97 + c);
+            const rank = String(8 - r);
+            sliders.push({ sq: file + rank, type: p.type });
+          }
+        }
+      }
+    } catch (_) {}
+    return sliders;
+  }
+
+  // Authentic Tactical Motif Detector (Fork, Pin, Discovered Attack/Check, Skewer, Hanging Piece, Promotion, Checkmate)
+  static detectTacticalMotifs(chessBefore, move, chessAfter) {
+    if (!move) return null;
+    const PIECE_VALS = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+    const movingColor = move.color;
+    const oppColor = movingColor === 'w' ? 'b' : 'w';
+
+    // 1. Checkmate
+    try {
+      if (chessAfter.in_checkmate && chessAfter.in_checkmate()) {
+        return { type: 'checkmate', labelVi: 'Chiếu hết kết thúc ván đấu', labelEn: 'Decisive Checkmate' };
+      }
+    } catch (_) {}
+
+    // 2. Promotion
+    if (move.promotion) {
+      return { type: 'promotion', labelVi: 'Phong cấp', labelEn: 'Pawn Promotion' };
+    }
+
+    // 3. Fork / Double Attack
+    try {
+      const destSq = move.to;
+      const legalsAfter = chessAfter.moves({ verbose: true });
+      const attacksByMovedPiece = legalsAfter.filter(m => m.from === destSq);
+      const targets = [];
+      const isCheck = chessAfter.in_check && chessAfter.in_check();
+      if (isCheck) {
+        targets.push({ type: 'k', sq: 'king', val: 20000 });
+      }
+
+      attacksByMovedPiece.forEach(atk => {
+        const targetPiece = chessAfter.get(atk.to);
+        if (targetPiece && targetPiece.color === oppColor && targetPiece.type !== 'k') {
+          if (!targets.some(t => t.sq === atk.to)) {
+            targets.push({ type: targetPiece.type, sq: atk.to, val: PIECE_VALS[targetPiece.type] || 100 });
+          }
+        }
+      });
+
+      if (targets.length >= 2) {
+        const sortedTargets = targets.sort((a, b) => b.val - a.val);
+        const movedVal = PIECE_VALS[move.piece] || 100;
+        const isTrueFork = (isCheck && sortedTargets.length >= 2) ||
+                           (sortedTargets[0].val >= movedVal && sortedTargets[1].val >= movedVal) ||
+                           (move.piece === 'p' && sortedTargets.length >= 2 && sortedTargets[1].val >= 300) ||
+                           (move.piece === 'n' && (isCheck || sortedTargets[0].val >= 500));
+        if (isTrueFork) {
+          return {
+            type: 'fork',
+            labelVi: 'Đòn tấn công đôi (Fork)',
+            labelEn: 'Fork / Double Attack',
+            targets: [sortedTargets[0].type, sortedTargets[1].type]
+          };
+        }
+      }
+    } catch (_) {}
+
+    // 4. Pin Detection
+    try {
+      if (['b', 'r', 'q'].includes(move.piece)) {
+        const enemyKingSq = this.findKingSquare(chessAfter, oppColor);
+        if (enemyKingSq && this.areAligned(move.to, enemyKingSq)) {
+          const ray = this.getRayBetween(move.to, enemyKingSq);
+          if (ray && ray.length > 0) {
+            const piecesOnRay = ray.map(sq => chessAfter.get(sq)).filter(Boolean);
+            if (piecesOnRay.length === 1 && piecesOnRay[0].color === oppColor) {
+              return {
+                type: 'pin',
+                labelVi: 'Đòn ghim tuyệt đối vào Vua',
+                labelEn: 'Absolute Pin against King',
+                pinned: piecesOnRay[0].type
+              };
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 5. Discovered Attack / Discovered Check
+    try {
+      const fromSq = move.from;
+      const isCheck = chessAfter.in_check && chessAfter.in_check();
+      const friendlySliders = this.findFriendlySliders(chessBefore, movingColor);
+      for (const slider of friendlySliders) {
+        if (slider.sq !== move.to && this.areAligned(slider.sq, fromSq)) {
+          const ray = this.getRayBeyond(slider.sq, fromSq);
+          if (ray) {
+            const firstPieceBeyond = ray.map(sq => chessAfter.get(sq)).filter(Boolean)[0];
+            if (firstPieceBeyond && firstPieceBeyond.color === oppColor) {
+              if (isCheck && firstPieceBeyond.type === 'k') {
+                return {
+                  type: 'discovered_check',
+                  labelVi: 'Đòn chiếu mở (Discovered Check)',
+                  labelEn: 'Discovered Check'
+                };
+              } else if (PIECE_VALS[firstPieceBeyond.type] >= 300) {
+                return {
+                  type: 'discovered_attack',
+                  labelVi: 'Đòn tấn công mở',
+                  labelEn: 'Discovered Attack'
+                };
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 6. Hanging Piece (En prise)
+    try {
+      const oppAttackers = chessAfter.attackers ? chessAfter.attackers(move.to, oppColor) : [];
+      const myDefenders = chessAfter.attackers ? chessAfter.attackers(move.to, movingColor) : [];
+      if (oppAttackers && oppAttackers.length > 0 && (!myDefenders || myDefenders.length === 0)) {
+        if ((PIECE_VALS[move.piece] || 100) >= 300) {
+          return {
+            type: 'hanging_piece',
+            labelVi: `Để treo quân ${move.piece.toUpperCase()} (En prise)`,
+            labelEn: `Hanging Piece ${move.piece.toUpperCase()}`
+          };
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
+  // Dynamic Bilingual Coach Danny Commentary Generator
+  static generateDannyCommentary(move, classification, motif, bestMove, winDrop, prevWin, currWin, isBook, openingInfo) {
+    const san = move.san;
+    const PIECE_NAMES_VI = { p: 'Tốt', n: 'Mã', b: 'Tượng', r: 'Xe', q: 'Hậu', k: 'Vua' };
+    const PIECE_NAMES_EN = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+    const pVi = PIECE_NAMES_VI[move.piece] || 'quân';
+    const pEn = PIECE_NAMES_EN[move.piece] || 'piece';
+    const bestSan = bestMove ? bestMove.san : '';
+
+    if (isBook) {
+      if (san === 'd5') {
+        return {
+          vi: 'Phản công d5 trực diện vào trung tâm theo sách Scandinavian.',
+          en: 'Strikes back directly at White\'s center according to Scandinavian theory.'
+        };
+      }
+      return {
+        vi: OPENING_BOOK[san]?.vi || 'Là một nước đi như sách giáo khoa.',
+        en: OPENING_BOOK[san]?.en || 'This opening move is popular for its versatility and control of the center.'
+      };
+    }
+
+    if (classification.type === 'brilliant') {
+      if (move.piece === 'r' && move.captured && (move.captured === 'n' || move.captured === 'b')) {
+        return {
+          vi: `Tuyệt đỉnh thiên tài! Nước thí chất (${san}) mang tính bước ngoặt, phá vỡ phòng ngự và duy trì ưu thế thắng lợi quyết định!`,
+          en: `A brilliant exchange sacrifice! Giving up the rook shattered the defense while maintaining decisive winning pressure.`
+        };
+      }
+      if (motif && motif.type === 'fork') {
+        return {
+          vi: `Tuyệt đỉnh thiên tài! ${san} vừa thí quân vừa tạo đòn tấn công đôi hiểm hóc!`,
+          en: `Brilliant! ${san} sacrifices material to execute a lethal fork that opponent cannot meet!`
+        };
+      }
+      return {
+        vi: `Tuyệt đỉnh thiên tài! Nước thí quân ngoạn mục tìm ra nước cờ thắng cuộc duy nhất!`,
+        en: `A brilliant intuitive sacrifice finding the only winning line!`
+      };
+    }
+
+    if (classification.type === 'great') {
+      if (motif && motif.type === 'fork') {
+        return {
+          vi: `Nước cờ tuyệt vời! ${san} tìm ra đòn tấn công đôi then chốt, củng cố vị trí vượt trội.`,
+          en: `A great move! Finding a crucial fork that shifts the momentum of the game.`
+        };
+      }
+      if (motif && motif.type === 'pin') {
+        return {
+          vi: `Nước cờ rất hay! ${san} tận dụng đòn ghim hiểm hóc để trói chặt lực lượng của đối thủ.`,
+          en: `A great find! Exploiting a nasty pin to tie down the opponent's pieces.`
+        };
+      }
+      return {
+        vi: `${san} là một nước đi hay, củng cố vị trí vượt trội.`,
+        en: `A great find finding active harmony on the board.`
+      };
+    }
+
+    if (classification.type === 'blunder') {
+      if (motif && motif.type === 'hanging_piece') {
+        return {
+          vi: `Nước sai lầm ngớ ngẩn! ${san} để lại quân ${pVi} không được bảo vệ (en prise). Đáng lẽ nên đi ${bestSan}.`,
+          en: `A major blunder! Leaving the ${pEn} completely unprotected. Best was ${bestSan}.`
+        };
+      }
+      return {
+        vi: `Nước sai lầm ngớ ngẩn! ${san} làm mất ưu thế nghiêm trọng. Đáng lẽ nên đi ${bestSan}.`,
+        en: `A major blunder! ${san} hands over the advantage. Best was ${bestSan}.`
+      };
+    }
+
+    if (classification.type === 'miss') {
+      return {
+        vi: `Bỏ lỡ cơ hội tốt nhất để giành thắng lợi! Đáng lẽ nên đi ${bestSan}.`,
+        en: `Missed an opportunity to seize the win. Best was ${bestSan}.`
+      };
+    }
+
+    if (classification.type === 'mistake') {
+      return {
+        vi: `Sai lầm! ${san} tạo điều kiện cho đối thủ phản công. Nước cờ tối ưu là ${bestSan}.`,
+        en: `A noticeable mistake. Optimal move was ${bestSan}.`
+      };
+    }
+
+    if (classification.type === 'inaccuracy') {
+      return {
+        vi: `Nước đi chưa chính xác. ${san} làm giảm áp lực, nên đi ${bestSan}.`,
+        en: `An inaccuracy. Better was ${bestSan}.`
+      };
+    }
+
+    if (classification.type === 'best') {
+      if (san === 'O-O' || san === 'O-O-O') {
+        return {
+          vi: `Nước cờ tốt nhất! Đưa Vua vào nơi an toàn và kích hoạt Xe tham chiến.`,
+          en: `The best move! Tucking the King into safety while connecting the rooks.`
+        };
+      }
+      return {
+        vi: `Nước cờ tốt nhất theo phân tích của Stockfish.`,
+        en: `The best move according to Stockfish.`
+      };
+    }
+
+    if (classification.type === 'good') {
+      return {
+        vi: `Nước đi rất tốt, duy trì thế trận cân bằng và chủ động.`,
+        en: `A solid, excellent move keeping active pressure.`
+      };
+    }
+
+    return {
+      vi: `Nước đi an toàn và hợp lý.`,
+      en: `A solid, sensible move.`
+    };
+  }
+
   // 3. Move Classification according to Chess.com CAPS2 guidelines (All 10 Tiers)
   // Calibrated against Chess.com using Stockfish 19 NNUE depth 18 on game 173033536202
   // Thresholds based on Chess.com reverse-engineering research (winLoss = win% drop from player perspective)
@@ -751,6 +1214,7 @@ export class GameReviewManager {
     let currentWClk = '5:00';
     let currentBClk = '5:00';
     let inBook = true;
+    const openingInfo = detectOpening(moves);
 
     // Parse initial clock
     let initialClock = '5:00';
@@ -896,37 +1360,18 @@ export class GameReviewManager {
         evalText = `${sign}${(cp / 100).toFixed(2)}`;
       }
 
-      // Commentary
-      const bestSan = bestMoveCandidate ? bestMoveCandidate.san : '';
-      let vi = '', en = '';
-      if (isBook) {
-        vi = OPENING_BOOK[m.san]?.vi || 'Là một nước đi như sách giáo khoa.';
-        en = OPENING_BOOK[m.san]?.en || 'Opening theory move.';
-      } else if (classification.type === 'blunder') {
-        vi = `Nước sai lầm ngớ ngẩn! ${m.san} làm mất ưu thế nghiêm trọng. Đáng lẽ nên đi ${bestSan}.`;
-        en = `A major blunder! ${m.san} hands over the advantage. Best was ${bestSan}.`;
-      } else if (classification.type === 'mistake') {
-        vi = `Sai lầm! ${m.san} tạo điều kiện cho đối thủ. Nước cờ tối ưu là ${bestSan}.`;
-        en = `A noticeable mistake. Best was ${bestSan}.`;
-      } else if (classification.type === 'miss') {
-        vi = `Bỏ lỡ cơ hội! Đáng lẽ nên đi ${bestSan}.`;
-        en = `Missed opportunity. Best was ${bestSan}.`;
-      } else if (classification.type === 'inaccuracy') {
-        vi = `Chưa chính xác. ${m.san} giảm ưu thế, nên đi ${bestSan}.`;
-        en = `An inaccuracy. Better was ${bestSan}.`;
-      } else if (classification.type === 'brilliant') {
-        vi = `Thiên tài! ${m.san} là nước thí quân ngoạn mục, giữ ưu thế quyết định.`;
-        en = `Brilliant! A stunning sacrifice keeping a decisive advantage!`;
-      } else if (classification.type === 'great') {
-        vi = `${m.san} là nước đi hay, tìm ra hòa hợp tích cực trên bàn cờ.`;
-        en = `A great find finding active harmony on the board.`;
-      } else if (classification.type === 'best') {
-        vi = `Nước cờ tốt nhất theo Stockfish.`;
-        en = `The best move according to Stockfish.`;
-      } else {
-        vi = `Nước đi an toàn và hợp lý.`;
-        en = `A solid, sensible move.`;
-      }
+      // Tactical motif detection (Chess.com parity)
+      let tacticalMotif = null;
+      try {
+        const cBefore = new Chess(fens[idx]);
+        const cAfter = new Chess(fens[idx + 1]);
+        tacticalMotif = GameReviewManager.detectTacticalMotifs(cBefore, m, cAfter);
+      } catch (_) {}
+
+      // Context-aware Coach Danny dynamic commentary
+      const commentary = GameReviewManager.generateDannyCommentary(m, classification, tacticalMotif, bestMoveCandidate, winDrop, prevWin, currWin, isBook, openingInfo);
+      const vi = commentary.vi;
+      const en = commentary.en;
 
       // Best move arrow
       const moveArrows = [];
@@ -1046,12 +1491,20 @@ export class GameReviewManager {
       }
     ];
 
+    const summaryVi = openingInfo && openingInfo.eco !== 'A00'
+      ? `Ván đấu bắt đầu với ${openingInfo.nameVi} (${openingInfo.eco}). Cả hai kỳ thủ đã cống hiến một thế trận đầy kịch tính!`
+      : 'Hãy cùng xem lại chi tiết ván đấu này.';
+    const summaryEn = openingInfo && openingInfo.eco !== 'A00'
+      ? `The game opened with the ${openingInfo.nameEn} (${openingInfo.eco}). Both sides engaged in a fascinating theoretical battle!`
+      : "Let's take a closer look at this game.";
+
     return {
       initialClock,
       accuracy: { white: finalWhiteAcc, black: finalBlackAcc },
       performanceRating: { white: perfWhite, black: perfBlack },
-      summaryEn: "Let's take a closer look at this game.",
-      summaryVi: 'Hãy cùng xem lại chi tiết ván đấu này.',
+      opening: openingInfo,
+      summaryEn,
+      summaryVi,
       breakdown, phases, pgn, moveCommentaries
     };
   }
@@ -1073,6 +1526,7 @@ export class GameReviewManager {
     const pgnHeaders = chess.header();
     const startFen = pgnHeaders['FEN'] || null;
     const tempChess = startFen ? new Chess(startFen) : new Chess();
+    const openingInfo = detectOpening(moves);
     const moveCommentaries = {};
     const breakdownCounts = {
       w: { brilliant: 0, great: 0, book: 0, best: 0, good: 0, solid: 0, inaccuracy: 0, mistake: 0, miss: 0, blunder: 0 },
@@ -1237,39 +1691,17 @@ export class GameReviewManager {
         evalText = `${sign}${(cp / 100).toFixed(2)}`;
       }
 
-      // Context-aware commentaries with Best Move recommendation
-      let vi = '';
-      let en = '';
-      const bestSan = bestMoveCandidate ? bestMoveCandidate.san : '';
+      // Tactical motif detection (Chess.com parity)
+      let tacticalMotif = null;
+      try {
+        const cBefore = new Chess(fenBeforeMove);
+        tacticalMotif = GameReviewManager.detectTacticalMotifs(cBefore, m, tempChess);
+      } catch (_) {}
 
-      if (isBook) {
-        vi = OPENING_BOOK[m.san]?.vi || 'Là một nước đi như sách giáo khoa.';
-        en = OPENING_BOOK[m.san]?.en || 'This opening move is popular for its versatility and control of the center.';
-      } else if (classification.type === 'blunder') {
-        vi = `Nước sai lầm ngớ ngẩn! ${m.san} làm mất ưu thế nghiêm trọng. Đáng lẽ nên đi ${bestSan}.`;
-        en = `A major blunder! ${m.san} hands over the advantage. Best was ${bestSan}.`;
-      } else if (classification.type === 'mistake') {
-        vi = `Sai lầm! ${m.san} tạo điều kiện cho đối thủ phản công. Nước cờ tối ưu là ${bestSan}.`;
-        en = `A noticeable mistake. Optimal move was ${bestSan}.`;
-      } else if (classification.type === 'miss') {
-        vi = `Bỏ lỡ cơ hội tốt nhất để giành thắng lợi! Đáng lẽ nên đi ${bestSan}.`;
-        en = `Missed an opportunity to seize the win. Best was ${bestSan}.`;
-      } else if (classification.type === 'inaccuracy') {
-        vi = `Nước đi chưa chính xác. ${m.san} làm giảm áp lực, nên đi ${bestSan}.`;
-        en = `An inaccuracy. Better was ${bestSan}.`;
-      } else if (classification.type === 'brilliant') {
-        vi = `Tuyệt đỉnh thiên tài! Nước thí quân ngoạn mục tìm ra nước cờ thắng cuộc duy nhất!`;
-        en = `A brilliant intuitive sacrifice finding the only winning line!`;
-      } else if (classification.type === 'great') {
-        vi = `${m.san} là một nước đi hay, củng cố vị trí vượt trội.`;
-        en = `A great find finding active harmony on the board.`;
-      } else if (classification.type === 'best') {
-        vi = `Nước cờ tốt nhất theo phân tích của Stockfish 19 NNUE.`;
-        en = `The best move according to Stockfish 19 NNUE.`;
-      } else {
-        vi = `Nước đi an toàn và hợp lý.`;
-        en = `A solid, sensible move.`;
-      }
+      // Context-aware commentaries with Best Move recommendation
+      const commentary = GameReviewManager.generateDannyCommentary(m, classification, tacticalMotif, bestMoveCandidate, winDrop, prevWin, currWin, isBook, openingInfo);
+      const vi = commentary.vi;
+      const en = commentary.en;
 
       // Find opponent's threat if this was a blunder/mistake/miss
       let threatCandidate = null;
@@ -1435,12 +1867,20 @@ export class GameReviewManager {
       }
     ];
 
+    const summaryVi = openingInfo && openingInfo.eco !== 'A00'
+      ? `Ván đấu bắt đầu với ${openingInfo.nameVi} (${openingInfo.eco}). Cả hai kỳ thủ đã cống hiến một thế trận đầy kịch tính!`
+      : 'Hãy cùng xem lại chi tiết ván đấu này.';
+    const summaryEn = openingInfo && openingInfo.eco !== 'A00'
+      ? `The game opened with the ${openingInfo.nameEn} (${openingInfo.eco}). Both sides engaged in a fascinating theoretical battle!`
+      : "Let's take a closer look at this game.";
+
     return {
       initialClock,
       accuracy: { white: finalWhiteAcc, black: finalBlackAcc },
       performanceRating: { white: perfWhite, black: perfBlack },
-      summaryEn: "Let's take a closer look at this game.",
-      summaryVi: 'Hãy cùng xem lại chi tiết ván đấu này.',
+      opening: openingInfo,
+      summaryEn,
+      summaryVi,
       breakdown,
       phases,
       pgn,

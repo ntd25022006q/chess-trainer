@@ -321,14 +321,14 @@ class ChessTrainerApp {
     if (btnHighlights) {
       btnHighlights.addEventListener('click', () => {
         this.stopAutoPlay();
-        for (let i = this.currentMoveIndex - 2; i >= 0; i--) {
-          const rev = this.moveReviews[i];
-          if (rev && ['badge-brilliant', 'badge-great', 'badge-blunder', 'badge-miss', 'badge-mistake'].includes(rev.badgeClass)) {
-            this.jumpToMove(i + 1);
-            return;
-          }
+        const prevKey = this.getPrevKeyMoment(this.currentMoveIndex);
+        if (prevKey > 0) {
+          this.jumpToMove(prevKey);
+        } else {
+          const lastKey = this.getPrevKeyMoment(this.historyFens.length);
+          if (lastKey > 0) this.jumpToMove(lastKey);
+          else this.jumpToMove(1);
         }
-        this.jumpToMove(1);
       });
     }
 
@@ -388,11 +388,30 @@ class ChessTrainerApp {
       });
     }
 
-    // Keyboard shortcut: Press 'X' to flip board (Chess.com shortcut)
+    // Keyboard shortcuts (Chess.com 1:1 Parity: Arrow keys, Space, X)
     window.addEventListener('keydown', (e) => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
       if (e.key === 'x' || e.key === 'X') {
         this.flipBoard();
+      } else if (e.key === 'ArrowLeft' || e.key === 'j') {
+        e.preventDefault();
+        this.stopAutoPlay();
+        if (this.currentMoveIndex > 0) this.jumpToMove(this.currentMoveIndex - 1);
+      } else if (e.key === 'ArrowRight' || e.key === 'k') {
+        e.preventDefault();
+        this.stopAutoPlay();
+        if (this.currentMoveIndex < this.historyFens.length - 1) this.jumpToMove(this.currentMoveIndex + 1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        this.stopAutoPlay();
+        this.jumpToMove(0);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        this.stopAutoPlay();
+        this.jumpToMove(this.historyFens.length - 1);
+      } else if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        this.toggleAutoPlay();
       }
     });
   }
@@ -1173,8 +1192,15 @@ class ChessTrainerApp {
     // 1. Play Sound
     const last = (index > 0 && this.gameMoves) ? this.gameMoves[index - 1] : null;
     if (last) {
-      if (last.san && (last.san.includes('+') || last.san.includes('#') || (this.chess && this.chess.in_check && this.chess.in_check()))) {
+      if (last.san && (last.san.includes('#') || (this.chess && this.chess.in_checkmate && this.chess.in_checkmate()))) {
         chessAudio.playCheck();
+        setTimeout(() => chessAudio.playGameEnd(), 150);
+      } else if (last.san && (last.san.includes('+') || (this.chess && this.chess.in_check && this.chess.in_check()))) {
+        chessAudio.playCheck();
+      } else if (last.san === 'O-O' || last.san === 'O-O-O') {
+        chessAudio.playCastle();
+      } else if (last.san && last.san.includes('=')) {
+        chessAudio.playPromote();
       } else if (last.captured) {
         chessAudio.playCapture();
       } else {
