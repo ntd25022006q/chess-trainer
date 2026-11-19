@@ -884,37 +884,49 @@ export class GameReviewManager {
       };
     }
 
+    const hasDistinctBest = (bestSan && bestSan !== san);
+
     if (classification.type === 'blunder') {
       if (motif && motif.type === 'hanging_piece') {
+        const recoVi = hasDistinctBest ? ` Đáng lẽ nên đi ${bestSan}.` : '';
+        const recoEn = hasDistinctBest ? ` Best was ${bestSan}.` : '';
         return {
-          vi: `Nước sai lầm ngớ ngẩn! ${san} để lại quân ${pVi} không được bảo vệ (en prise). Đáng lẽ nên đi ${bestSan}.`,
-          en: `A major blunder! Leaving the ${pEn} completely unprotected. Best was ${bestSan}.`
+          vi: `Nước sai lầm ngớ ngẩn! ${san} để lại quân ${pVi} không được bảo vệ (en prise).${recoVi}`,
+          en: `A major blunder! Leaving the ${pEn} completely unprotected.${recoEn}`
         };
       }
+      const recoVi = hasDistinctBest ? ` Đáng lẽ nên đi ${bestSan}.` : ' Làm mất ưu thế nghiêm trọng.';
+      const recoEn = hasDistinctBest ? ` Best was ${bestSan}.` : ' Hands over the advantage.';
       return {
-        vi: `Nước sai lầm ngớ ngẩn! ${san} làm mất ưu thế nghiêm trọng. Đáng lẽ nên đi ${bestSan}.`,
-        en: `A major blunder! ${san} hands over the advantage. Best was ${bestSan}.`
+        vi: `Nước sai lầm ngớ ngẩn! ${san} làm suy yếu thế trận nghiêm trọng.${recoVi}`,
+        en: `A major blunder! ${san} compromises the position.${recoEn}`
       };
     }
 
     if (classification.type === 'miss') {
+      const recoVi = hasDistinctBest ? ` Đáng lẽ nên đi ${bestSan}.` : ' Đã để lỡ cơ hội giành ưu thế.';
+      const recoEn = hasDistinctBest ? ` Best was ${bestSan}.` : ' Missed the key opportunity.';
       return {
-        vi: `Bỏ lỡ cơ hội tốt nhất để giành thắng lợi! Đáng lẽ nên đi ${bestSan}.`,
-        en: `Missed an opportunity to seize the win. Best was ${bestSan}.`
+        vi: `Bỏ lỡ cơ hội tốt nhất để giành thắng lợi!${recoVi}`,
+        en: `Missed an opportunity to seize the win.${recoEn}`
       };
     }
 
     if (classification.type === 'mistake') {
+      const recoVi = hasDistinctBest ? ` Nước cờ tối ưu là ${bestSan}.` : ' Làm giảm đi thế trận chủ động.';
+      const recoEn = hasDistinctBest ? ` Optimal move was ${bestSan}.` : ' Reduces active initiative.';
       return {
-        vi: `Sai lầm! ${san} tạo điều kiện cho đối thủ phản công. Nước cờ tối ưu là ${bestSan}.`,
-        en: `A noticeable mistake. Optimal move was ${bestSan}.`
+        vi: `Sai lầm! ${san} tạo điều kiện cho đối thủ phản công.${recoVi}`,
+        en: `A noticeable mistake. ${san} gives the opponent counterplay.${recoEn}`
       };
     }
 
     if (classification.type === 'inaccuracy') {
+      const recoVi = hasDistinctBest ? `, nên đi ${bestSan}.` : ' và đánh mất ưu thế.';
+      const recoEn = hasDistinctBest ? ` Better was ${bestSan}.` : ' and reduces winning pressure.';
       return {
-        vi: `Nước đi chưa chính xác. ${san} làm giảm áp lực, nên đi ${bestSan}.`,
-        en: `An inaccuracy. Better was ${bestSan}.`
+        vi: `Nước đi chưa chính xác. ${san} làm giảm áp lực${recoVi}`,
+        en: `An inaccuracy.${recoEn}`
       };
     }
 
@@ -1137,10 +1149,8 @@ export class GameReviewManager {
       }
       if (onProgress) onProgress(i, totalMoves + 1);
 
-      // Periodically yield to browser main event loop to prevent UI stutter & CDP timeouts
-      if (i % 3 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 4));
-      }
+      // Yield to browser main event loop after every move to keep CDP and UI 100% responsive
+      await new Promise(resolve => setTimeout(resolve, 8));
 
       // Instant 0ms shortcut for standard initial starting position
       if (i === 0 && fens[0].startsWith(STARTING_FEN_CLEAN)) {
@@ -1391,6 +1401,53 @@ export class GameReviewManager {
         const cAfter = new Chess(fens[idx + 1]);
         tacticalMotif = GameReviewManager.detectTacticalMotifs(cBefore, m, cAfter);
       } catch (_) {}
+
+      // If move was a mistake/inaccuracy/blunder/miss, ensure recommended best move is NOT the move played
+      if (['blunder', 'mistake', 'miss', 'inaccuracy'].includes(classification.type)) {
+        if (bestMoveCandidate && (bestMoveCandidate.from === m.from && bestMoveCandidate.to === m.to)) {
+          if (evalBefore.secondBestMove) {
+            const sUci = evalBefore.secondBestMove;
+            try {
+              const tmpSan = new Chess(fens[idx]);
+              const sEx = tmpSan.move({ from: sUci.substring(0, 2), to: sUci.substring(2, 4), promotion: sUci[4] || undefined });
+              if (sEx && (sEx.from !== m.from || sEx.to !== m.to)) {
+                bestMoveCandidate = { from: sEx.from, to: sEx.to, san: sEx.san };
+              } else {
+                bestMoveCandidate = null;
+              }
+            } catch (_) {
+              bestMoveCandidate = null;
+            }
+          }
+          if (!bestMoveCandidate || (bestMoveCandidate.from === m.from && bestMoveCandidate.to === m.to)) {
+            try {
+              const cBefore = new Chess(fens[idx]);
+              const altMoves = cBefore.moves({ verbose: true }).filter(lm => lm.from !== m.from || lm.to !== m.to);
+              if (altMoves.length > 0) {
+                let bestAltScore = (side === 'w') ? -999999 : 999999;
+                let bestAlt = altMoves[0];
+                for (const am of altMoves) {
+                  cBefore.move(am.san);
+                  const sc = GameReviewManager.evaluatePeSTO(cBefore);
+                  cBefore.undo();
+                  if (side === 'w' && sc > bestAltScore) {
+                    bestAltScore = sc;
+                    bestAlt = am;
+                  } else if (side === 'b' && sc < bestAltScore) {
+                    bestAltScore = sc;
+                    bestAlt = am;
+                  }
+                }
+                bestMoveCandidate = { from: bestAlt.from, to: bestAlt.to, san: bestAlt.san };
+              } else {
+                bestMoveCandidate = null;
+              }
+            } catch (_) {
+              bestMoveCandidate = null;
+            }
+          }
+        }
+      }
 
       // Context-aware Coach Danny dynamic commentary
       const commentary = GameReviewManager.generateDannyCommentary(m, classification, tacticalMotif, bestMoveCandidate, winDrop, prevWin, currWin, isBook, openingInfo);

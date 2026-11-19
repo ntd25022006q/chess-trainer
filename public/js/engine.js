@@ -365,8 +365,8 @@ export class StockfishEngine {
         this.worker.postMessage(`go depth ${depth}`);
       }
 
-      // Adaptive safety timeout: 4x maxTime or max 12s
-      const timeoutMs = Math.max(12000, (maxTimeMs || 150) * 4);
+      // Adaptive safety timeout: 4x maxTime or max 800ms to guarantee zero UI/CDP freeze
+      const timeoutMs = Math.max(800, (maxTimeMs || 60) * 4);
       setTimeout(() => {
         if (!resolved) {
           resolved = true;

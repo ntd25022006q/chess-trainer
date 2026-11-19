@@ -388,19 +388,14 @@ class ChessTrainerApp {
       btnShare.addEventListener('click', () => {
         const gameId = this.currentGame?.gameId || '184609437048';
         const shareUrl = `${window.location.origin}/game/live/${gameId}`;
-        const w = this.currentGame?.players?.white?.username || 'Trắng';
-        const b = this.currentGame?.players?.black?.username || 'Đen';
-        const wAcc = this.currentGame?.accuracy?.white || '88.4';
-        const bAcc = this.currentGame?.accuracy?.black || '86.5';
-        const shareText = `♟️ Xem lại ván đấu Chess.com: ${w} (${wAcc}%) vs ${b} (${bAcc}%)\n🔗 Link phân tích: ${shareUrl}`;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareUrl).then(() => {
-            alert(`🔗 Đã sao chép liên kết phân tích ván cờ vào clipboard:\n\n${shareUrl}`);
+            this.showToast('✓ Đã sao chép liên kết phân tích vào bộ nhớ tạm!', 'success');
           }).catch(() => {
-            prompt('Sao chép liên kết phân tích ván cờ:', shareUrl);
+            this.showToast(`Liên kết phân tích: ${shareUrl}`, 'info', 5000);
           });
         } else {
-          prompt('Sao chép liên kết phân tích ván cờ:', shareUrl);
+          this.showToast(`Liên kết phân tích: ${shareUrl}`, 'info', 5000);
         }
       });
     }
@@ -455,6 +450,27 @@ class ChessTrainerApp {
       if (this.isKeyMoment(i)) return i;
     }
     return 0;
+  }
+
+  showToast(message, type = 'info', duration = 3200) {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast-item toast-${type}`;
+    const icon = type === 'success' ? '✓' : (type === 'error' ? '⚠️' : 'ℹ️');
+    const iconColor = type === 'success' ? '#81b64c' : (type === 'error' ? '#fa412d' : '#888888');
+    toast.innerHTML = `<span class="toast-icon" style="color: ${iconColor}; font-weight: bold;">${icon}</span><span class="toast-msg">${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 320);
+    }, duration);
   }
 
   speakCommentary(text) {
@@ -1524,13 +1540,13 @@ class ChessTrainerApp {
 
     // Coach Danny speech bubble
     if (coachTextEl) {
+      const sideName = isFlipped ? 'bên Đen' : 'bên Trắng';
       if (gameResult === '1/2-1/2') {
-        const sideName = isFlipped ? 'Black' : 'White';
-        coachTextEl.textContent = `${sideName} took the draw, but had something better. See a full explanation with Game Review.`;
+        coachTextEl.textContent = `${sideName.charAt(0).toUpperCase() + sideName.slice(1)} chấp nhận kết quả hòa, dù có cơ hội nắm giữ thế trận tốt hơn. Hãy cùng xem lại chi tiết ván đấu.`;
       } else if ((gameResult === '1-0' && side === 'w') || (gameResult === '0-1' && side === 'b')) {
-        coachTextEl.textContent = 'You played great and earned the victory! See a full explanation with Game Review.';
+        coachTextEl.textContent = 'Bạn đã thi đấu xuất sắc và giành chiến thắng thuyết phục! Hãy cùng xem lại các bước ngoặt của ván đấu.';
       } else {
-        coachTextEl.textContent = 'Good fight! See where the game turned with Game Review.';
+        coachTextEl.textContent = 'Một trận đấu kịch tính và cống hiến! Hãy xem lại chi tiết ván đấu để rút ra những bài học quý giá.';
       }
     }
 
@@ -1647,7 +1663,7 @@ class ChessTrainerApp {
       // Step 2: Background Stockfish 19 Deep Refinement (Zero screen blocking)
       this.startStockfishRefinement(data.pgn, { accuracies: data.accuracies, players: data.players });
     } catch (err) {
-      alert(`⚠️ Lỗi nạp link: ${err.message}`);
+      this.showToast(`Lỗi nạp link: ${err.message}`, 'error', 4500);
     } finally {
       if (btn) {
         btn.disabled = false;
@@ -1735,6 +1751,8 @@ class ChessTrainerApp {
               rev.arrows = refinedRev.arrows;
             }
           });
+          // Synchronize move list notation buttons with updated Stockfish classifications
+          this.renderWalkthroughMoveList();
         }
         if (!metadata.accuracies) {
           this.currentGame.accuracy = refined.accuracy;
@@ -2057,8 +2075,8 @@ class ChessTrainerApp {
           }
         } else if (classification.type === 'brilliant') {
           coachText.innerHTML = `
-            Nước đi thử nghiệm trên bàn cờ.<br>
-            <span class="sub-commentary">Trial move on the board. Nhấn <strong>"▶ Quay lại"</strong> để trở về ván cờ chính.</span>
+            Nước cờ thiên tài! Đòn thí quân mở ra ưu thế tấn công vượt trội.<br>
+            <span class="sub-commentary">Nhấn <strong>"▶ Quay lại"</strong> để trở về ván cờ chính.</span>
           `;
           if (this.voiceEnabled) {
             this.speakCommentary(`${move.san}. Brilliant move! Material sacrifice retaining strong winning chances.`);
@@ -2066,28 +2084,27 @@ class ChessTrainerApp {
         } else if (classification.type === 'miss') {
           coachText.innerHTML = `
             Bỏ lỡ cơ hội tốt nhất để duy trì ưu thế.<br>
-            <span class="sub-commentary">Missed an opportunity to keep advantage. Nhấn <strong>"▶ Quay lại"</strong> để trở về ván cờ chính.</span>
+            <span class="sub-commentary">Nhấn <strong>"▶ Quay lại"</strong> để trở về ván cờ chính.</span>
           `;
           if (this.voiceEnabled) {
             this.speakCommentary(`${move.san}. Missed an opportunity.`);
           }
         } else if (classification.type === 'blunder') {
           coachText.innerHTML = `
-            Nước sai lầm ngớ ngẩn! ${formatSanWithSymbol(move.san, movingSide)} làm mất quân hoặc suy yếu phòng thủ nghiêm trọng.<br>
-            <span class="sub-commentary">A severe blunder. Nhấn <strong>"▶ Quay lại"</strong> để trở về ván cờ chính.</span>
+            Sai lầm nghiêm trọng! ${formatSanWithSymbol(move.san, movingSide)} làm mất quân hoặc suy yếu phòng thủ trầm trọng.<br>
+            <span class="sub-commentary">Nhấn <strong>"▶ Quay lại"</strong> để trở về ván cờ chính.</span>
           `;
           if (this.voiceEnabled) {
             this.speakCommentary(`${move.san}. A severe blunder that alters the game.`);
           }
         } else {
           let trialVi = `${formatSanWithSymbol(move.san, movingSide)} là phương án tối ưu theo máy tính, giữ vững vị thế.`;
-          let trialEn = `Optimal move according to the engine.`;
           coachText.innerHTML = `
             ${trialVi}<br>
-            <span class="sub-commentary">${trialEn} Nhấn <strong>"▶ Quay lại"</strong> để trở về ván cờ chính.</span>
+            <span class="sub-commentary">Nhấn <strong>"▶ Quay lại"</strong> để trở về ván cờ chính.</span>
           `;
           if (this.voiceEnabled) {
-            this.speakCommentary(`${move.san}. ${trialEn}`);
+            this.speakCommentary(`${move.san}. Optimal move.`);
           }
         }
       }
@@ -2198,7 +2215,7 @@ class ChessTrainerApp {
 
     const coachText = document.getElementById('walkthroughCoachText');
     if (coachText) {
-      coachText.innerHTML = `Phương án tối ưu của máy tính.<br><span class="sub-commentary">Best move recommendation.</span>`;
+      coachText.innerHTML = `Phương án tối ưu của máy tính giúp duy trì ưu thế tốt nhất.`;
     }
 
     // 2. Buttons in normalActionButtons (Matches Image 2: [ 💡 Giải thích ] [ ▶ Quay lại ])
@@ -2275,7 +2292,7 @@ class ChessTrainerApp {
 
     const coachText = document.getElementById('walkthroughCoachText');
     if (coachText) {
-      coachText.innerHTML = `Xem diễn biến biến thể để hiểu tại sao đây là phương án tốt nhất.<br><span class="sub-commentary">Variation continuation explanation.</span>`;
+      coachText.innerHTML = `Xem các nước tiếp theo để hiểu tại sao đây là phương án tối ưu nhất.`;
     }
 
     // 3. Continuation moves (dynamic multi-ply continuation if not pre-defined)
