@@ -384,7 +384,7 @@ export class StockfishEngine {
             secondWinChance: l2.winChance ?? null,
             secondScoreWhite: l2.scoreWhite ?? null
           };
-          if (this.evalCache) this.evalCache.set(fen, resObj);
+          if (this.evalCache) this.evalCache.set(fenKey, resObj);
           resolve(resObj);
         }
       }, timeoutMs);

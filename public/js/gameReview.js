@@ -821,6 +821,206 @@ export class GameReviewManager {
       }
     } catch (_) {}
 
+    // 7. Skewer Detection (Đòn xiên)
+    try {
+      if (['b', 'r', 'q'].includes(move.piece)) {
+        const destSq = move.to;
+        const enemyKingSq = this.findKingSquare(chessAfter, oppColor);
+        // Case A: Front piece is King (in check)
+        if (enemyKingSq && this.areAligned(destSq, enemyKingSq)) {
+          const rayBetween = this.getRayBetween(destSq, enemyKingSq);
+          const isDirectAttackOnKing = rayBetween && rayBetween.every(sq => !chessAfter.get(sq));
+          if (isDirectAttackOnKing) {
+            const rayBeyond = this.getRayBeyond(destSq, enemyKingSq);
+            if (rayBeyond) {
+              const pieceBeyond = rayBeyond.map(sq => chessAfter.get(sq)).filter(Boolean)[0];
+              if (pieceBeyond && pieceBeyond.color === oppColor && PIECE_VALS[pieceBeyond.type] >= 300) {
+                return {
+                  type: 'skewer',
+                  labelVi: 'Đòn xiên (Skewer)',
+                  labelEn: 'Skewer Attack',
+                  front: 'k',
+                  behind: pieceBeyond.type
+                };
+              }
+            }
+          }
+        }
+        // Case B: Front piece is Queen or Rook
+        const legalsAfter = chessAfter.moves({ verbose: true });
+        const attacks = legalsAfter.filter(m => m.from === destSq);
+        for (const atk of attacks) {
+          const frontTarget = chessAfter.get(atk.to);
+          if (frontTarget && frontTarget.color === oppColor && PIECE_VALS[frontTarget.type] >= 500) {
+            if (this.areAligned(destSq, atk.to)) {
+              const rayBeyond = this.getRayBeyond(destSq, atk.to);
+              if (rayBeyond) {
+                const pieceBeyond = rayBeyond.map(sq => chessAfter.get(sq)).filter(Boolean)[0];
+                if (pieceBeyond && pieceBeyond.color === oppColor && PIECE_VALS[pieceBeyond.type] >= 300) {
+                  return {
+                    type: 'skewer',
+                    labelVi: 'Đòn xiên (Skewer)',
+                    labelEn: 'Skewer Attack',
+                    front: frontTarget.type,
+                    behind: pieceBeyond.type
+                  };
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 8. Trapped Piece Detection (Bẫy quân)
+    try {
+      const legalsAfter = chessAfter.moves({ verbose: true });
+      const attacksByMovedPiece = legalsAfter.filter(m => m.from === move.to);
+      for (const atk of attacksByMovedPiece) {
+        const victim = chessAfter.get(atk.to);
+        if (victim && victim.color === oppColor && PIECE_VALS[victim.type] >= 300 && victim.type !== 'k') {
+          const oppMoves = chessAfter.moves({ verbose: true }).filter(om => om.from === atk.to);
+          if (oppMoves.length > 0) {
+            const hasSafeEscape = oppMoves.some(om => {
+              const cap = chessAfter.get(om.to);
+              if (cap && PIECE_VALS[cap.type] >= PIECE_VALS[victim.type]) return true;
+              const attackers = chessAfter.attackers ? chessAfter.attackers(om.to, movingColor) : [];
+              return !attackers || attackers.length === 0;
+            });
+            if (!hasSafeEscape) {
+              return {
+                type: 'trapped_piece',
+                labelVi: `Bẫy quân ${victim.type.toUpperCase()}`,
+                labelEn: `Trapped ${victim.type.toUpperCase()}`,
+                piece: victim.type
+              };
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 9. Back-Rank Threat Detection (Đe dọa chiếu hết hàng đáy)
+    try {
+      const enemyKingSq = this.findKingSquare(chessAfter, oppColor);
+      const oppBackRank = oppColor === 'w' ? '1' : '8';
+      if (enemyKingSq && enemyKingSq[1] === oppBackRank && ['r', 'q'].includes(move.piece)) {
+        const pawnRank = oppColor === 'w' ? '2' : '7';
+        const kFileCode = enemyKingSq.charCodeAt(0);
+        let blockedPawnsCount = 0;
+        for (let df = -1; df <= 1; df++) {
+          const f = String.fromCharCode(kFileCode + df);
+          if (f >= 'a' && f <= 'h') {
+            const p = chessAfter.get(f + pawnRank);
+            if (p && p.color === oppColor && p.type === 'p') blockedPawnsCount++;
+          }
+        }
+        if (blockedPawnsCount >= 2) {
+          const isCheck = chessAfter.in_check && chessAfter.in_check();
+          if (move.to[1] === oppBackRank || isCheck) {
+            return {
+              type: 'back_rank_threat',
+              labelVi: 'Đe dọa chiếu hết hàng ngang đáy',
+              labelEn: 'Back-Rank Mate Threat'
+            };
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 10. Knight Outpost Detection (Tiền đồn Mã trung tâm hiểm yếu)
+    try {
+      if (move.piece === 'n') {
+        const destRank = parseInt(move.to[1], 10);
+        const isGoodRank = movingColor === 'w' ? (destRank >= 4 && destRank <= 6) : (destRank >= 3 && destRank <= 5);
+        const destFile = move.to[0];
+        const isCenterFile = ['c', 'd', 'e', 'f'].includes(destFile);
+        if (isGoodRank && isCenterFile) {
+          const myAttackers = chessAfter.attackers ? chessAfter.attackers(move.to, movingColor) : [];
+          const hasPawnDefender = myAttackers.some(sq => {
+            const p = chessAfter.get(sq);
+            return p && p.type === 'p';
+          });
+          if (hasPawnDefender) {
+            const oppAttackers = chessAfter.attackers ? chessAfter.attackers(move.to, oppColor) : [];
+            const hasEnemyPawnAttacker = oppAttackers.some(sq => {
+              const p = chessAfter.get(sq);
+              return p && p.type === 'p';
+            });
+            if (!hasEnemyPawnAttacker) {
+              return {
+                type: 'outpost',
+                labelVi: 'Tiền đồn Mã trung tâm hiểm yếu',
+                labelEn: 'Knight Outpost',
+                square: move.to
+              };
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 11. Passed Pawn Creation (Tạo Tốt thông nguy hiểm)
+    try {
+      if (move.piece === 'p') {
+        const destRank = parseInt(move.to[1], 10);
+        const isAdvanced = movingColor === 'w' ? destRank >= 5 : destRank <= 4;
+        if (isAdvanced) {
+          const fCode = move.to.charCodeAt(0);
+          let hasOppPawnAhead = false;
+          for (let df = -1; df <= 1; df++) {
+            const f = String.fromCharCode(fCode + df);
+            if (f >= 'a' && f <= 'h') {
+              for (let r = 1; r <= 8; r++) {
+                const ahead = movingColor === 'w' ? r > destRank : r < destRank;
+                if (ahead) {
+                  const p = chessAfter.get(f + r);
+                  if (p && p.color === oppColor && p.type === 'p') {
+                    hasOppPawnAhead = true;
+                    break;
+                  }
+                }
+              }
+            }
+            if (hasOppPawnAhead) break;
+          }
+          if (!hasOppPawnAhead) {
+            return {
+              type: 'passed_pawn',
+              labelVi: 'Tạo Tốt thông nguy hiểm',
+              labelEn: 'Passed Pawn Creation',
+              square: move.to
+            };
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 12. Deflection / Decoy Detection (Đòn đánh lạc hướng)
+    try {
+      if (move.captured && ['r', 'b', 'n', 'q'].includes(move.piece)) {
+        const oppPieceAtDestBefore = chessBefore.get(move.to);
+        if (oppPieceAtDestBefore) {
+          const defendedBefore = chessBefore.moves({ verbose: true }).filter(m => m.from === move.to);
+          const exposedTarget = defendedBefore.find(db => {
+            const tp = chessBefore.get(db.to);
+            if (tp && tp.color === oppColor && PIECE_VALS[tp.type] >= 300) {
+              const atkNow = chessAfter.attackers ? chessAfter.attackers(db.to, movingColor) : [];
+              return atkNow && atkNow.length > 0;
+            }
+            return false;
+          });
+          if (exposedTarget) {
+            return {
+              type: 'deflection',
+              labelVi: 'Đòn đánh lạc hướng then chốt',
+              labelEn: 'Deflection / Decoy'
+            };
+          }
+        }
+      }
+    } catch (_) {}
+
     return null;
   }
 
@@ -859,6 +1059,18 @@ export class GameReviewManager {
           en: `Brilliant! ${san} sacrifices material to execute a lethal fork that opponent cannot meet!`
         };
       }
+      if (motif && motif.type === 'skewer') {
+        return {
+          vi: `Tuyệt đỉnh thiên tài! ${san} thí quân mở đường tung đòn xiên quyết định ván cờ!`,
+          en: `Brilliant intuitive sacrifice setting up a decisive skewer!`
+        };
+      }
+      if (motif && motif.type === 'deflection') {
+        return {
+          vi: `Tuyệt đỉnh thiên tài! ${san} là đòn thí quân đánh lạc hướng then chốt, phá vỡ hàng thủ đối phương!`,
+          en: `Brilliant! An exquisite deflection sacrifice destroying opponent's defense!`
+        };
+      }
       return {
         vi: `Tuyệt đỉnh thiên tài! Nước thí quân ngoạn mục tìm ra nước cờ thắng cuộc duy nhất!`,
         en: `A brilliant intuitive sacrifice finding the only winning line!`
@@ -876,6 +1088,42 @@ export class GameReviewManager {
         return {
           vi: `Nước cờ rất hay! ${san} tận dụng đòn ghim hiểm hóc để trói chặt lực lượng của đối thủ.`,
           en: `A great find! Exploiting a nasty pin to tie down the opponent's pieces.`
+        };
+      }
+      if (motif && motif.type === 'skewer') {
+        return {
+          vi: `Nước cờ tuyệt vời! ${san} tìm ra đòn xiên hiểm hóc, xuyên thủng tuyến phòng thủ của đối phương.`,
+          en: `A great move! Finding a lethal skewer slicing through opponent's position.`
+        };
+      }
+      if (motif && motif.type === 'trapped_piece') {
+        return {
+          vi: `Nước cờ rất hay! ${san} bẫy quân then chốt của đối thủ không thể giải cứu.`,
+          en: `A great find! Trapping the enemy piece with no safe escape.`
+        };
+      }
+      if (motif && motif.type === 'back_rank_threat') {
+        return {
+          vi: `Nước cờ sắc bén! ${san} tạo đòn ép hàng ngang đáy hiểm ác, đe dọa chiếu hết.`,
+          en: `A sharp move! Pounding the back rank with a mating threat.`
+        };
+      }
+      if (motif && motif.type === 'outpost') {
+        return {
+          vi: `Nước cờ xuất sắc! ${san} chiếm lĩnh tiền đồn trung tâm chiến lược cực mạnh.`,
+          en: `A great move! Securing a dominant central outpost.`
+        };
+      }
+      if (motif && motif.type === 'passed_pawn') {
+        return {
+          vi: `Nước cờ rất hay! ${san} tạo Tốt thông nguy hiểm mở toang đường thăng cấp.`,
+          en: `A great move! Creating a dangerous passed pawn marching forward.`
+        };
+      }
+      if (motif && motif.type === 'deflection') {
+        return {
+          vi: `Nước cờ tuyệt hảo! ${san} là đòn đánh lạc hướng phá tan sự phối hợp của đối phương.`,
+          en: `A great find! A deflection move that breaks down opponent's coordination.`
         };
       }
       return {
@@ -931,10 +1179,64 @@ export class GameReviewManager {
     }
 
     if (classification.type === 'best') {
+      if (motif && motif.type === 'fork') {
+        return {
+          vi: `Nước cờ tốt nhất! ${san} tạo đòn tấn công đôi chính xác.`,
+          en: `The best move! Executing a precise fork.`
+        };
+      }
+      if (motif && motif.type === 'pin') {
+        return {
+          vi: `Nước cờ tốt nhất! ${san} tận dụng đòn ghim trói chặt đối thủ.`,
+          en: `The best move! Pinning down the opponent's forces.`
+        };
+      }
+      if (motif && motif.type === 'skewer') {
+        return {
+          vi: `Nước cờ tốt nhất! ${san} tung đòn xiên chính xác xuyên qua tuyến phòng thủ.`,
+          en: `The best move! Delivering a clinical skewer.`
+        };
+      }
+      if (motif && motif.type === 'outpost') {
+        return {
+          vi: `Nước cờ tốt nhất! Đưa quân chiếm lĩnh tiền đồn trung tâm chiến lược.`,
+          en: `The best move! Occupying a dominating central outpost.`
+        };
+      }
+      if (motif && motif.type === 'passed_pawn') {
+        return {
+          vi: `Nước cờ tốt nhất! Tiến Tốt thông tạo sức ép lớn lên tàn cuộc.`,
+          en: `The best move! Pushing the passed pawn to increase endgame pressure.`
+        };
+      }
       if (san === 'O-O' || san === 'O-O-O') {
         return {
           vi: `Nước cờ tốt nhất! Đưa Vua vào nơi an toàn và kích hoạt Xe tham chiến.`,
           en: `The best move! Tucking the King into safety while connecting the rooks.`
+        };
+      }
+      if (san.includes('+')) {
+        return {
+          vi: `Nước cờ tốt nhất! Chiếu Vua chính xác buộc đối thủ phải xử lý phòng ngự thụ động.`,
+          en: `The best move! A forcing check putting opponent on the defensive.`
+        };
+      }
+      if (move.captured) {
+        return {
+          vi: `Nước cờ tốt nhất! Ăn quân chính xác, duy trì cán cân lực lượng và kiểm soát thế cờ.`,
+          en: `The best move! Clean capture maintaining optimal board control.`
+        };
+      }
+      if (move.piece === 'n' || move.piece === 'b') {
+        return {
+          vi: `Nước cờ tốt nhất! Phát triển quân tích cực và gia tăng kiểm soát trận địa.`,
+          en: `The best move! Active piece development increasing board control.`
+        };
+      }
+      if (move.piece === 'r') {
+        return {
+          vi: `Nước cờ tốt nhất! Đưa Xe chiếm lĩnh cột trọng yếu, gia tăng áp lực thế trận.`,
+          en: `The best move! Activating the rook on a key file.`
         };
       }
       return {
@@ -944,9 +1246,40 @@ export class GameReviewManager {
     }
 
     if (classification.type === 'good') {
+      if (move.captured) {
+        return {
+          vi: `Nước đi rất tốt, ăn quân an toàn và duy trì cán cân thế trận.`,
+          en: `A good move, safely capturing and maintaining balance.`
+        };
+      }
+      if (san === 'O-O' || san === 'O-O-O') {
+        return {
+          vi: `Nước đi rất tốt, đưa Vua vào nơi an toàn và kích hoạt Xe.`,
+          en: `A good move, safeguarding the King.`
+        };
+      }
+      if (motif && motif.type === 'outpost') {
+        return {
+          vi: `Nước đi rất tốt, chiếm lĩnh vị trí tiền đồn chắc chắn.`,
+          en: `A good move, securing a solid outpost.`
+        };
+      }
       return {
         vi: `Nước đi rất tốt, duy trì thế trận cân bằng và chủ động.`,
         en: `A solid, excellent move keeping active pressure.`
+      };
+    }
+
+    if (classification.type === 'solid') {
+      if (move.piece === 'p') {
+        return {
+          vi: `Nước đi chắc chắn, củng cố cấu trúc Tốt và bảo vệ không gian.`,
+          en: `A solid pawn move strengthening the pawn structure.`
+        };
+      }
+      return {
+        vi: `Nước đi an toàn và hợp lý.`,
+        en: `A solid, sensible move.`
       };
     }
 
@@ -1211,15 +1544,18 @@ export class GameReviewManager {
       }
 
       const prevResult = i > 0 ? sfResults[i - 1] : null;
-      const isLopsided = prevResult && Math.abs(prevResult.scoreWhite) > 700;
+      const isLopsided = prevResult && Math.abs(prevResult.scoreWhite) > 600;
 
-      let posMaxTime = defaultMaxTime;
-      let posDepth = SF_DEPTH;
-
-      if (isLopsided) {
-        posMaxTime = 25;
-        posDepth = 10;
+      // Smart adaptive time budgeting based on game length to guarantee lightning-fast review
+      let adaptiveMaxTime = defaultMaxTime;
+      if (totalMoves > 120) {
+        adaptiveMaxTime = Math.min(defaultMaxTime, 35);
+      } else if (totalMoves > 70) {
+        adaptiveMaxTime = Math.min(defaultMaxTime, 50);
       }
+
+      let posMaxTime = isLopsided ? 20 : adaptiveMaxTime;
+      let posDepth = isLopsided ? 10 : SF_DEPTH;
 
       try {
         const result = await engine.evaluatePositionAsync(fens[i], posDepth, posMaxTime);
