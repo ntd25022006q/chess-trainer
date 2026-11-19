@@ -233,6 +233,23 @@ class ChessTrainerApp {
       });
     }
 
+    // Review Tab Navigation (Overview vs Walkthrough)
+    const tabOverview = document.getElementById('tabOverview');
+    const tabWalkthrough = document.getElementById('tabWalkthrough');
+    if (tabOverview) {
+      tabOverview.addEventListener('click', () => {
+        this.switchView('review-overview');
+      });
+    }
+    if (tabWalkthrough) {
+      tabWalkthrough.addEventListener('click', () => {
+        this.switchView('review-walkthrough');
+        if (this.currentMoveIndex === 0 && this.historyFens.length > 1) {
+          this.jumpToMove(1);
+        }
+      });
+    }
+
     // "Xem lại" Big Green Button (Screenshots 1 & 2 -> Screenshot 3)
     const btnStartWalkthrough = document.getElementById('btnStartWalkthrough');
     if (btnStartWalkthrough) {
@@ -512,15 +529,21 @@ class ChessTrainerApp {
     this.currentView = viewName;
     const overviewEl = document.getElementById('reviewOverviewView');
     const walkthroughEl = document.getElementById('reviewWalkthroughView');
+    const tabOverview = document.getElementById('tabOverview');
+    const tabWalkthrough = document.getElementById('tabWalkthrough');
 
     if (overviewEl) overviewEl.classList.add('hidden');
     if (walkthroughEl) walkthroughEl.classList.add('hidden');
 
     if (viewName === 'review-overview') {
       if (overviewEl) overviewEl.classList.remove('hidden');
+      if (tabOverview) tabOverview.classList.add('active');
+      if (tabWalkthrough) tabWalkthrough.classList.remove('active');
       setTimeout(() => this.overviewChart.draw(-1), 20);
     } else if (viewName === 'review-walkthrough') {
       if (walkthroughEl) walkthroughEl.classList.remove('hidden');
+      if (tabWalkthrough) tabWalkthrough.classList.add('active');
+      if (tabOverview) tabOverview.classList.remove('active');
       setTimeout(() => this.walkthroughChart.draw(this.currentMoveIndex), 20);
     }
   }
@@ -936,7 +959,7 @@ class ChessTrainerApp {
     }
     if (oBlackAv) {
       oBlackAv.src = this.getSafeAvatarUrl(b.avatarUrl, b.username);
-      oBlackAv.onerror = () => { oBlackAv.src = '/assets/default-user.svg'; };
+      oBlackAv.onerror = () => { oBlackAv.src = '/assets/default-user-black.svg'; };
     }
     document.getElementById('overviewWhiteName').textContent = w.username;
     document.getElementById('overviewBlackName').textContent = b.username;
@@ -950,23 +973,28 @@ class ChessTrainerApp {
     if (perfWhite) perfWhite.textContent = (gameData.performanceRating && gameData.performanceRating.white) ? gameData.performanceRating.white : (w.rating || '—');
     if (perfBlack) perfBlack.textContent = (gameData.performanceRating && gameData.performanceRating.black) ? gameData.performanceRating.black : (b.rating || '—');
 
-    // Coach summary text (Screenshot 2)
+    // Coach summary text (Clean, single-language, professional Chess.com format)
+    const summary = gameData.summaryVi || gameData.summaryEn || 'Hãy cùng xem lại chi tiết ván đấu này.';
     document.getElementById('coachSummaryText').innerHTML = `
-      ${gameData.summaryEn}<br>
-      <span class="sub-commentary">${gameData.summaryVi}</span>
+      <p class="coach-speech-main">${summary}</p>
     `;
 
     // 2. Breakdown counts (Chess.com 1:1 Parity matching Image 4: Label | White Count | Badge Icon | Black Count)
     const statsTableBody = document.getElementById('classificationTableBody');
     if (statsTableBody && gameData.breakdown) {
-      statsTableBody.innerHTML = gameData.breakdown.map(item => `
-        <tr class="breakdown-row">
-          <td class="col-label">${item.label}</td>
-          <td class="col-stat col-stat-w ${item.colorClass}-text">${item.w}</td>
-          <td class="col-badge"><span class="badge-icon ${item.colorClass}">${item.icon}</span></td>
-          <td class="col-stat col-stat-b ${item.colorClass}-text">${item.b}</td>
-        </tr>
-      `).join('');
+      statsTableBody.innerHTML = gameData.breakdown.map(item => {
+        const displayLabel = item.label === 'Chủ đề sách' ? 'Lý thuyết' : (item.label === 'Nước sai lầm ngớ ngẩn' ? 'Sai lầm nghiêm trọng' : item.label);
+        const zeroW = (item.w === 0 || item.w === '0') ? 'zero-stat' : '';
+        const zeroB = (item.b === 0 || item.b === '0') ? 'zero-stat' : '';
+        return `
+          <tr class="breakdown-row">
+            <td class="col-label">${displayLabel}</td>
+            <td class="col-stat col-stat-w ${item.colorClass}-text ${zeroW}">${item.w}</td>
+            <td class="col-badge"><span class="badge-icon ${item.colorClass}">${item.icon}</span></td>
+            <td class="col-stat col-stat-b ${item.colorClass}-text ${zeroB}">${item.b}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
     // 3. Phase evaluations (Screenshot 1 & Attachment 9)
@@ -1169,6 +1197,9 @@ class ChessTrainerApp {
 
   jumpToMove(index) {
     if (index < 0 || index >= this.historyFens.length) return;
+    if (index > 0 && this.currentView === 'review-overview') {
+      this.switchView('review-walkthrough');
+    }
     this.currentMoveIndex = index;
     const fen = this.historyFens[index];
 
@@ -1270,11 +1301,11 @@ class ChessTrainerApp {
           if (rev.badgeClass === 'badge-best') {
             pillTag.innerHTML = `${badgeHtml}${sanHtml} là nước tốt nhất`;
           } else if (rev.badgeClass === 'badge-great') {
-            pillTag.innerHTML = `${badgeHtml}${sanHtml} là nước tuyệt`;
+            pillTag.innerHTML = `${badgeHtml}${sanHtml} là nước cờ hay`;
           } else if (rev.badgeClass === 'badge-miss') {
             pillTag.innerHTML = `${badgeHtml}${sanHtml} bỏ lỡ`;
           } else if (rev.badgeClass === 'badge-blunder') {
-            pillTag.innerHTML = `${badgeHtml}${sanHtml} là nước sai lầm ngớ ngẩn`;
+            pillTag.innerHTML = `${badgeHtml}${sanHtml} là sai lầm nghiêm trọng`;
           } else {
             pillTag.innerHTML = `${badgeHtml}${sanHtml}`;
           }
@@ -1288,10 +1319,9 @@ class ChessTrainerApp {
           if (rev.badgeClass === 'badge-best' && (!rev.vi || rev.vi.includes('nước tốt nhất'))) {
             coachText.innerHTML = '';
           } else if (rev.vi) {
-            coachText.innerHTML = `
-              ${rev.vi}<br>
-              <span class="sub-commentary">${rev.en || ''}</span>
-            `;
+            coachText.innerHTML = `<p class="coach-speech-main">${rev.vi}</p>`;
+          } else if (rev.en) {
+            coachText.innerHTML = `<p class="coach-speech-main">${rev.en}</p>`;
           } else {
             coachText.innerHTML = '';
           }
@@ -1690,6 +1720,22 @@ class ChessTrainerApp {
         this.currentGame.breakdown = refined.breakdown;
         this.currentGame.phases = refined.phases;
         this.currentGame.moveCommentaries = refined.moveCommentaries;
+        if (refined.moveCommentaries && this.moveReviews) {
+          this.moveReviews.forEach((rev) => {
+            const refinedRev = refined.moveCommentaries[rev.ply];
+            if (refinedRev) {
+              rev.badge = refinedRev.badge;
+              rev.badgeClass = refinedRev.badgeClass;
+              rev.eval = refinedRev.eval;
+              rev.winChance = refinedRev.winChance;
+              rev.vi = refinedRev.vi;
+              rev.en = refinedRev.en;
+              rev.bestMove = refinedRev.bestMove;
+              rev.threat = refinedRev.threat;
+              rev.arrows = refinedRev.arrows;
+            }
+          });
+        }
         if (!metadata.accuracies) {
           this.currentGame.accuracy = refined.accuracy;
           this.currentGame.performanceRating = refined.performanceRating;
@@ -1699,17 +1745,22 @@ class ChessTrainerApp {
           if (bAcc) bAcc.textContent = refined.accuracy.black;
         }
 
-        // Update Breakdown Table
+        // Update Breakdown Table (Mute zeros & authentic localized display)
         const statsTableBody = document.getElementById('classificationTableBody');
         if (statsTableBody && refined.breakdown) {
-          statsTableBody.innerHTML = refined.breakdown.map(item => `
-            <tr class="breakdown-row">
-              <td class="col-label">${item.label}</td>
-              <td class="col-stat col-stat-w ${item.colorClass}-text">${item.w}</td>
-              <td class="col-badge"><span class="badge-icon ${item.colorClass}">${item.icon}</span></td>
-              <td class="col-stat col-stat-b ${item.colorClass}-text">${item.b}</td>
-            </tr>
-          `).join('');
+          statsTableBody.innerHTML = refined.breakdown.map(item => {
+            const displayLabel = item.label === 'Chủ đề sách' ? 'Lý thuyết' : (item.label === 'Nước sai lầm ngớ ngẩn' ? 'Sai lầm nghiêm trọng' : item.label);
+            const zeroW = (item.w === 0 || item.w === '0') ? 'zero-stat' : '';
+            const zeroB = (item.b === 0 || item.b === '0') ? 'zero-stat' : '';
+            return `
+              <tr class="breakdown-row">
+                <td class="col-label">${displayLabel}</td>
+                <td class="col-stat col-stat-w ${item.colorClass}-text ${zeroW}">${item.w}</td>
+                <td class="col-badge"><span class="badge-icon ${item.colorClass}">${item.icon}</span></td>
+                <td class="col-stat col-stat-b ${item.colorClass}-text ${zeroB}">${item.b}</td>
+              </tr>
+            `;
+          }).join('');
         }
 
         // Update Phases Table
@@ -2397,136 +2448,6 @@ class ChessTrainerApp {
     } else {
       this.board.clearSelection();
     }
-  }
-
-  async showDailyPuzzleModal() {
-    const modal = document.getElementById('pubApiModal');
-    const title = document.getElementById('pubModalTitle');
-    const body = document.getElementById('pubModalBody');
-    if (!modal || !body) return;
-
-    modal.classList.remove('hidden');
-    title.textContent = '🧩 Câu đố hàng ngày Chess.com (Published Data API)';
-    body.innerHTML = '<p>Đang tải câu đố mới nhất từ Chess.com...</p>';
-
-    try {
-      const puzzle = await chessComApi.getDailyPuzzle();
-      const proxiedImg = puzzle.image ? `/api/proxy-image?url=${encodeURIComponent(puzzle.image)}` : '';
-      body.innerHTML = `
-        <div class="pub-puzzle-card">
-          <h4 style="margin: 0 0 8px 0; color: #81b64c; font-size: 16px;">${puzzle.title || 'Câu đố hàng ngày'}</h4>
-          <p style="color: #aaa; margin: 0 0 10px 0; font-size: 12px;">Xuất bản: ${new Date((puzzle.publish_time || Date.now() / 1000) * 1000).toLocaleDateString('vi-VN')}</p>
-          ${proxiedImg ? `<img src="${proxiedImg}" alt="Chess.com Daily Puzzle" class="pub-puzzle-img" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : ''}
-          <p style="margin: 10px 0; font-size: 13px;">FEN: <code style="background: #181614; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${puzzle.fen}</code></p>
-          <div style="display: flex; gap: 8px; justify-content: center; margin-top: 14px;">
-            <button id="btnLoadPuzzleGame" class="btn-url-analyze" style="padding: 8px 18px; font-size: 13px;">🔍 Phân tích thế cờ này với Stockfish</button>
-            <a href="${puzzle.url || 'https://www.chess.com/daily-chess-puzzle'}" target="_blank" rel="noopener noreferrer" class="btn-url-secondary" style="padding: 8px 14px; text-decoration: none; font-size: 13px;">Xem trên Chess.com ↗</a>
-          </div>
-        </div>
-      `;
-
-      document.getElementById('btnLoadPuzzleGame')?.addEventListener('click', async () => {
-        this.hidePubModal();
-        const pgnToLoad = puzzle.pgn || `[Result "*"]\n[SetUp "1"]\n[FEN "${puzzle.fen}"]\n\n*`;
-        const btn = document.getElementById('btnTopAnalyze');
-        const origText = btn ? btn.textContent : '';
-        if (btn) {
-          btn.disabled = true;
-          btn.textContent = '🔍 Đang phân tích câu đố...';
-        }
-        try {
-          const analyzed = await GameReviewManager.analyzeGameWithStockfish(
-            pgnToLoad,
-            this.engine,
-            { players: { white: { username: 'White' }, black: { username: 'Black' } } }
-          );
-          if (analyzed) {
-            this.loadGame({
-              gameId: `puzzle_${puzzle.publish_time || Date.now()}`,
-              url: puzzle.url || '',
-              headers: { White: 'White', Black: 'Black', Event: puzzle.title || 'Câu đố hàng ngày' },
-              players: {
-                white: { username: 'White', rating: 2500, title: '' },
-                black: { username: 'Black', rating: 2500, title: '' }
-              },
-              ...analyzed,
-              pgn: pgnToLoad
-            });
-            this.engine.restoreAfterReview();
-          }
-        } catch (e) {
-          console.warn('Puzzle analysis error:', e);
-        } finally {
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = origText;
-          }
-        }
-      });
-    } catch (err) {
-      body.innerHTML = `<p style="color: #ef4444;">⚠️ Không thể tải câu đố: ${err.message}</p>`;
-    }
-  }
-
-  async showLeaderboardModal() {
-    const modal = document.getElementById('pubApiModal');
-    const title = document.getElementById('pubModalTitle');
-    const body = document.getElementById('pubModalBody');
-    if (!modal || !body) return;
-
-    modal.classList.remove('hidden');
-    title.textContent = '🏆 Bảng xếp hạng Top 50 Chess.com (Published Data API)';
-    body.innerHTML = '<p>Đang tải bảng xếp hạng trực tiếp từ Chess.com...</p>';
-
-    try {
-      const data = await chessComApi.getLeaderboards();
-      const blitzTop = (data.live_blitz || []).slice(0, 8);
-      const rapidTop = (data.live_rapid || []).slice(0, 8);
-
-      body.innerHTML = `
-        <div style="margin-bottom: 16px;">
-          <h4 style="margin: 0 0 10px 0; color: #81b64c;">⚡ Top Live Blitz (Bấm kỳ thủ để xem ván gần nhất)</h4>
-          <div class="pub-leader-list">
-            ${blitzTop.map((p, idx) => `
-              <div class="pub-leader-item" data-username="${p.username}" title="Bấm để phân tích ván đấu mới nhất của ${p.username}">
-                <span class="pub-leader-rank">#${idx + 1}</span>
-                <span class="pub-leader-user">${p.title ? `<span class="chess-title-tag gm" style="font-size: 10px; margin-right: 4px;">${p.title}</span>` : ''}${p.username}</span>
-                <span class="pub-leader-score">${p.score}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <div>
-          <h4 style="margin: 0 0 10px 0; color: #38bdf8;">⏱️ Top Live Rapid</h4>
-          <div class="pub-leader-list">
-            ${rapidTop.map((p, idx) => `
-              <div class="pub-leader-item" data-username="${p.username}" title="Bấm để phân tích ván đấu mới nhất của ${p.username}">
-                <span class="pub-leader-rank">#${idx + 1}</span>
-                <span class="pub-leader-user">${p.title ? `<span class="chess-title-tag gm" style="font-size: 10px; margin-right: 4px;">${p.title}</span>` : ''}${p.username}</span>
-                <span class="pub-leader-score">${p.score}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-
-      body.querySelectorAll('.pub-leader-item').forEach(el => {
-        el.addEventListener('click', () => {
-          const u = el.dataset.username;
-          this.hidePubModal();
-          const inp = document.getElementById('topGameUrlInput');
-          if (inp) inp.value = u;
-          this.importFromUrl(u);
-        });
-      });
-    } catch (err) {
-      body.innerHTML = `<p style="color: #ef4444;">⚠️ Không thể tải bảng xếp hạng: ${err.message}</p>`;
-    }
-  }
-
-  hidePubModal() {
-    document.getElementById('pubApiModal')?.classList.add('hidden');
   }
 }
 

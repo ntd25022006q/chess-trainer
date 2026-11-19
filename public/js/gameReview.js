@@ -1131,8 +1131,16 @@ export class GameReviewManager {
     }
 
     for (let i = 0; i <= totalMoves; i++) {
-      if (metadata.isCancelled && metadata.isCancelled()) return null;
+      if (metadata.isCancelled && metadata.isCancelled()) {
+        if (engine) engine.stop();
+        return null;
+      }
       if (onProgress) onProgress(i, totalMoves + 1);
+
+      // Periodically yield to browser main event loop to prevent UI stutter & CDP timeouts
+      if (i % 3 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 4));
+      }
 
       // Instant 0ms shortcut for standard initial starting position
       if (i === 0 && fens[0].startsWith(STARTING_FEN_CLEAN)) {
@@ -1173,18 +1181,34 @@ export class GameReviewManager {
 
       // Adaptive depth & time budget for ultra-fast, high-precision review
       const isBookFen = i <= 12 && this.getBookMoves(fens[i])?.length > 0;
+      if (isBookFen) {
+        const bookMoves = this.getBookMoves(fens[i]);
+        const bestBook = bookMoves && bookMoves[0] ? bookMoves[0] : null;
+        const tmpC = new Chess(fens[i]);
+        const cp = this.evaluatePeSTO(tmpC);
+        const wc = this.calculateWinChance(cp);
+        sfResults.push({
+          scoreWhite: cp,
+          winChance: wc,
+          bestMove: bestBook ? bestBook.from + bestBook.to : null,
+          pv: bestBook ? bestBook.san : '',
+          isMate: false,
+          secondBestMove: null,
+          secondWinChance: null,
+          secondScoreWhite: null
+        });
+        continue;
+      }
+
       const prevResult = i > 0 ? sfResults[i - 1] : null;
       const isLopsided = prevResult && Math.abs(prevResult.scoreWhite) > 700;
 
       let posMaxTime = defaultMaxTime;
       let posDepth = SF_DEPTH;
 
-      if (isBookFen) {
+      if (isLopsided) {
         posMaxTime = 25;
         posDepth = 10;
-      } else if (isLopsided) {
-        posMaxTime = 40;
-        posDepth = 14;
       }
 
       try {

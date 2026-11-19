@@ -1,0 +1,10 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#262421" rx="20"/>
+  <!-- Dark Pawn Silhouette for Black Player -->
+  <circle cx="200" cy="115" r="50" fill="#45423e"/>
+  <ellipse cx="200" cy="180" rx="35" ry="12" fill="#45423e"/>
+  <path d="M175 185 C165 240, 140 280, 110 310 L290 310 C260 280, 235 240, 225 185 Z" fill="#45423e"/>
+  <rect x="95" y="310" width="210" height="35" rx="8" fill="#45423e"/>
+  <!-- Subtle specular highlight -->
+  <path d="M185 100 Q195 90 205 90 Q195 105 185 100" fill="#58544f"/>
+</svg>

@@ -15,8 +15,10 @@
   <!-- Authentic Chess.com Clean Top Navigation -->
   <header class="chesscom-top-nav">
     <div class="nav-brand">
-      <img src="/assets/chesscom-logo.svg" alt="Chess.com" class="chesscom-pawn-logo" width="24" height="24">
-      <span class="chesscom-brand-name">Chess<span class="brand-com">.com</span></span>
+      <div class="chesscom-logo-badge">
+        <img src="/assets/chesscom-logo.svg" alt="Chess.com" class="chesscom-pawn-logo" width="30" height="30">
+      </div>
+      <span class="chesscom-brand-name">chess<span class="brand-com">.com</span></span>
       <span class="nav-path-separator">/</span>
       <span class="nav-subpath">Xem lại ván đấu</span>
     </div>
@@ -151,6 +153,16 @@
 
     <!-- Right Column: Authentic Chess.com Review Panels -->
     <aside class="right-section">
+      <!-- Authentic Chess.com Review Navigation Tab Bar -->
+      <nav class="review-tab-nav" aria-label="Review Navigation">
+        <button id="tabOverview" class="review-tab-btn active" title="Tổng quan ván đấu">
+          <span class="tab-icon">📊</span> Tổng quan
+        </button>
+        <button id="tabWalkthrough" class="review-tab-btn" title="Xem lại từng nước đi">
+          <span class="tab-icon">♟️</span> Từng nước đi
+        </button>
+      </nav>
+
       <!-- ==================== VIEW 1: GAME REVIEW OVERVIEW (Screenshots 1 & 2) ==================== -->
       <div class="review-panel-container" id="reviewOverviewView">
         <!-- Review Top Header -->
@@ -200,26 +212,43 @@
           <canvas id="reviewOverviewChart" class="overview-chart-canvas"></canvas>
         </div>
 
-        <!-- Accuracy Comparison Grid (Screenshot 2: 88.4 vs 86.5) -->
+        <!-- Accuracy Comparison Card (Authentic 1:1 Chess.com 2-Column Design) -->
         <div class="accuracy-comparison-card">
-          <div class="acc-row player-row">
-            <span class="acc-row-label">Các kỳ thủ</span>
-            <div class="player-avatar-item">
-              <span class="player-uname" id="overviewWhiteName">MagnusCarlsen</span>
-              <img id="overviewWhiteAvatar" class="mini-avatar" src="https://images.chesscomfiles.com/uploads/v1/user/3889224.121e2094.100x100o.9b93e9eeef44.jpg" alt="White">
-            </div>
-            <div class="player-avatar-item">
-              <span class="player-uname" id="overviewBlackName">Witty_Alien</span>
-              <img id="overviewBlackAvatar" class="mini-avatar green-border" src="https://images.chesscomfiles.com/uploads/v1/user/24250668.edaa550e.100x100o.d6437a25966f.png" alt="Black">
-            </div>
+          <div class="acc-card-header">
+            <span class="acc-header-title">Độ chính xác</span>
           </div>
+          <div class="acc-players-grid">
+            <!-- White Player Column -->
+            <div class="acc-player-col white-col">
+              <div class="acc-avatar-wrap">
+                <img id="overviewWhiteAvatar" class="mini-avatar" src="https://images.chesscomfiles.com/uploads/v1/user/3889224.121e2094.100x100o.9b93e9eeef44.jpg" alt="White">
+                <span class="piece-indicator white-pawn-icon">♙</span>
+              </div>
+              <span class="player-uname" id="overviewWhiteName">MagnusCarlsen</span>
+              <div class="acc-pill white-acc-pill"><span id="overviewWhiteAcc">88.4</span>%</div>
+            </div>
 
-          <div class="acc-row score-row">
-            <span class="acc-row-label">Độ chính xác</span>
-            <div class="acc-pill white-acc-pill" id="overviewWhiteAcc">88.4</div>
-            <div class="acc-pill black-acc-pill" id="overviewBlackAcc">86.5</div>
+            <!-- VS Divider -->
+            <div class="acc-vs-divider">
+              <span class="vs-text">VS</span>
+            </div>
+
+            <!-- Black Player Column -->
+            <div class="acc-player-col black-col">
+              <div class="acc-avatar-wrap">
+                <img id="overviewBlackAvatar" class="mini-avatar green-border" src="https://images.chesscomfiles.com/uploads/v1/user/24250668.edaa550e.100x100o.d6437a25966f.png" alt="Black">
+                <span class="piece-indicator black-pawn-icon">♟</span>
+              </div>
+              <span class="player-uname" id="overviewBlackName">Witty_Alien</span>
+              <div class="acc-pill black-acc-pill"><span id="overviewBlackAcc">86.5</span>%</div>
+            </div>
           </div>
         </div>
+
+        <!-- Big Vibrant Green CTA Button (Immediately visible on all screen sizes!) -->
+        <button id="btnStartWalkthrough" class="btn-big-green">
+          <span class="btn-play-icon">▶</span> Xem lại các nước đi
+        </button>
 
         <!-- Move Classifications Breakdown Table (Screenshot 1: Tuyệt, Tốt nhất, Tuyệt vời, Sai lầm, Bỏ lỡ, Nước sai lầm ngớ ngẩn) -->
         <div class="classification-table-wrapper">
@@ -250,11 +279,6 @@
             </tbody>
           </table>
         </div>
-
-        <!-- Big Vibrant Green Button (Screenshot 1 & 2: "Xem lại") -->
-        <button id="btnStartWalkthrough" class="btn-big-green">
-          Xem lại
-        </button>
       </div>
 
       <!-- ==================== VIEW 2: STEP-BY-STEP WALKTHROUGH (Screenshot 3 & 4) ==================== -->
