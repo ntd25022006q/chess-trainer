@@ -136,10 +136,18 @@ export class StockfishEngine {
       mateInWhite = -mateIn;
     }
 
-    // Sigmoid Win chance calculation
+    const wdlMatch = line.match(/\bwdl\s+(\d+)\s+(\d+)\s+(\d+)/);
+
+    // Sigmoid / Stockfish NNUE WDL Win chance calculation (Chess.com model)
     let winChance = 50;
     if (isMate) {
       winChance = mateInWhite > 0 ? 100 : 0;
+    } else if (wdlMatch) {
+      const wWdl = parseInt(wdlMatch[1], 10);
+      const dWdl = parseInt(wdlMatch[2], 10);
+      const sideWin = (wWdl + 0.5 * dWdl) / 10;
+      winChance = (this.activeTurn === 'w') ? Math.round(sideWin) : Math.round(100 - sideWin);
+      winChance = Math.max(0, Math.min(100, winChance));
     } else {
       winChance = Math.round(50 + 50 * (2 / (1 + Math.exp(-0.00368208 * scoreWhite)) - 1));
       winChance = Math.max(0, Math.min(100, winChance));
@@ -333,9 +341,19 @@ export class StockfishEngine {
           const scoreWhite = (turn === 'b') ? -score : score;
           const mateInWhite = (turn === 'b') ? -mateIn : mateIn;
 
+          const wdlMatch = line.match(/\bwdl\s+(\d+)\s+(\d+)\s+(\d+)/);
+
           let winChance = 50;
-          if (isMate) winChance = mateInWhite > 0 ? 100 : 0;
-          else {
+          if (isMate) {
+            winChance = mateInWhite > 0 ? 100 : 0;
+          } else if (wdlMatch) {
+            // Authentic Chess.com Stockfish NNUE WDL formula: win_chance = (W + 0.5 * D) / 1000
+            const wWdl = parseInt(wdlMatch[1], 10);
+            const dWdl = parseInt(wdlMatch[2], 10);
+            const sideWin = (wWdl + 0.5 * dWdl) / 10;
+            winChance = (turn === 'w') ? Math.round(sideWin) : Math.round(100 - sideWin);
+            winChance = Math.max(0, Math.min(100, winChance));
+          } else {
             winChance = Math.round(50 + 50 * (2 / (1 + Math.exp(-0.00368208 * scoreWhite)) - 1));
             winChance = Math.max(0, Math.min(100, winChance));
           }

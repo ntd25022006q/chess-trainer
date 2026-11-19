@@ -1868,8 +1868,14 @@ export class GameReviewManager {
 
     const wRating = (metadata.players?.white?.rating) || 1500;
     const bRating = (metadata.players?.black?.rating) || 1500;
-    const perfWhite = Math.max(100, Math.round(wRating + (parseFloat(finalWhiteAcc) - 75) * 20));
-    const perfBlack = Math.max(100, Math.round(bRating + (parseFloat(finalBlackAcc) - 75) * 20));
+    let perfWhite = (metadata.performanceRating?.white) ? metadata.performanceRating.white : null;
+    let perfBlack = (metadata.performanceRating?.black) ? metadata.performanceRating.black : null;
+    if (!perfWhite) {
+      perfWhite = Math.max(100, Math.round(wRating + (parseFloat(finalWhiteAcc) - 75) * 20));
+    }
+    if (!perfBlack) {
+      perfBlack = Math.max(100, Math.round(bRating + (parseFloat(finalBlackAcc) - 75) * 20));
+    }
 
     const breakdown = [
       { label: 'Thiên tài', icon: '!!', colorClass: 'badge-brilliant', w: breakdownCounts.w.brilliant || 0, b: breakdownCounts.b.brilliant || 0 },
@@ -2238,12 +2244,18 @@ export class GameReviewManager {
       finalBlackAcc = calcAcc(accuracies.b);
     }
 
-    // Dynamic Estimated Elo / Performance Rating
+    // Dynamic Estimated Elo / Performance Rating (Chess.com Parity)
     const wRating = (metadata.players && metadata.players.white && metadata.players.white.rating) || 1500;
     const bRating = (metadata.players && metadata.players.black && metadata.players.black.rating) || 1500;
 
-    const perfWhite = Math.max(100, Math.round(wRating + (parseFloat(finalWhiteAcc) - 75) * 20));
-    const perfBlack = Math.max(100, Math.round(bRating + (parseFloat(finalBlackAcc) - 75) * 20));
+    let perfWhite = (metadata.performanceRating && metadata.performanceRating.white) ? metadata.performanceRating.white : null;
+    let perfBlack = (metadata.performanceRating && metadata.performanceRating.black) ? metadata.performanceRating.black : null;
+    if (!perfWhite) {
+      perfWhite = Math.max(100, Math.round(wRating + (parseFloat(finalWhiteAcc) - 75) * 20));
+    }
+    if (!perfBlack) {
+      perfBlack = Math.max(100, Math.round(bRating + (parseFloat(finalBlackAcc) - 75) * 20));
+    }
 
     // Breakdown formatted for Chess.com Review table (All 10 Categories matching Image 4)
     const breakdown = [

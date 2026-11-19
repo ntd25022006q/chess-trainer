@@ -240,7 +240,35 @@ async function runMultiGameAnalysisSuite() {
   console.log(`✅ Danny Outpost commentary: "${commOutpost.vi}"`);
   console.log(`✅ Danny Passed Pawn commentary: "${commPassed.vi}"`);
 
-  console.log('\n=== ALL 6 MULTI-GAME ANALYSIS SECTIONS PASSED WITH 100% SUCCESS! ===');
+  // -------------------------------------------------------------
+  // TEST 7: Grandmaster Live Battle (Game 188647699041 - Konavets vs DenLaz)
+  // -------------------------------------------------------------
+  console.log('\n--- 7. Testing Grandmaster Battle 188647699041 (Konavets vs DenLaz) ---');
+  const gmFetchRes = await fetch('http://localhost:7777/api/import-game', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: '188647699041' })
+  });
+  if (!gmFetchRes.ok) {
+    throw new Error(`Failed to import game 188647699041: HTTP ${gmFetchRes.status}`);
+  }
+  const gmData = await gmFetchRes.json();
+  if (!gmData.success || !gmData.pgn) {
+    throw new Error('Invalid game data returned for 188647699041');
+  }
+
+  const gmReview = GameReviewManager.analyzeGame(gmData.pgn, gmData);
+  if (!gmReview || !gmReview.accuracy) {
+    throw new Error('Analysis failed for GM game 188647699041');
+  }
+  if (parseFloat(gmReview.accuracy.white) < 80 || parseFloat(gmReview.accuracy.black) < 85) {
+    throw new Error(`Unexpected low accuracy for GM game: ${JSON.stringify(gmReview.accuracy)}`);
+  }
+  console.log(`✅ GM Game 188647699041 evaluated: White=${gmReview.accuracy.white}%, Black=${gmReview.accuracy.black}%`);
+  console.log(`✅ Opening recognized: ${gmReview.opening.eco} - ${gmReview.opening.nameVi}`);
+  console.log(`✅ Summary: "${gmReview.summaryVi}"`);
+
+  console.log('\n=== ALL 7 MULTI-GAME ANALYSIS SECTIONS PASSED WITH 100% SUCCESS! ===');
 }
 
 runMultiGameAnalysisSuite().catch(err => {
