@@ -88,6 +88,15 @@ async function fetchChessComPub(endpointPath, ttlMs = 120000, asText = false) {
     pubApiCache.delete(cacheKey);
   }
 
+  // Evict expired entries or enforce maximum size limit to prevent memory buildup
+  if (pubApiCache.size > 500) {
+    for (const [k, v] of pubApiCache.entries()) {
+      if (now >= v.expiresAt || pubApiCache.size > 400) {
+        pubApiCache.delete(k);
+      }
+    }
+  }
+
   const targetUrl = `https://api.chess.com/pub/${cleanPath}`;
   const response = await fetch(targetUrl, {
     headers: {
@@ -416,6 +425,12 @@ app.post('/api/import-game', async (req, res) => {
     // Check fast cache first (<1ms response)
     if (importedGamesCache.has(trimmedUrl)) {
       return res.json(importedGamesCache.get(trimmedUrl));
+    }
+
+    // Limit cache size to 200 items to prevent unbounded memory growth
+    if (importedGamesCache.size > 200) {
+      const oldestKey = importedGamesCache.keys().next().value;
+      if (oldestKey) importedGamesCache.delete(oldestKey);
     }
 
     // 1. Handle Lichess URL
@@ -763,7 +778,7 @@ function startServer(port) {
     console.log(`===================================================`);
     console.log(`♟️ DeepChess Pro Max is running!`);
     console.log(`🌐 Local URL: http://localhost:${port}`);
-    console.log(`⚡ Stockfish 16 Engine (CAPS2 Review Engine): Ready`);
+    console.log(`⚡ Stockfish 19 Engine (CAPS2 Review Engine): Ready`);
     console.log(`===================================================`);
   });
 

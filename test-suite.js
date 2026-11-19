@@ -10,7 +10,8 @@ async function testFetch(url, options = {}) {
       port: u.port,
       path: u.pathname + u.search,
       method: options.method || 'GET',
-      headers: options.headers || {}
+      agent: false,
+      headers: { Connection: 'close', ...(options.headers || {}) }
     }, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);

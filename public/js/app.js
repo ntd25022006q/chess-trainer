@@ -1,11 +1,11 @@
 import { Chess } from '../lib/chess.js';
-import { StockfishEngine } from './engine.js?v=10.1';
-import { ChessBoardUI } from './board.js?v=10.1';
-import { chessAudio } from './audio.js?v=10.1';
-import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=10.1';
-import { AdvantageChart } from './chart.js?v=10.1';
-import { GameReviewManager } from './gameReview.js?v=10.1';
-import { chessComApi } from './chessComApi.js?v=10.1';
+import { StockfishEngine } from './engine.js?v=10.2';
+import { ChessBoardUI } from './board.js?v=10.2';
+import { chessAudio } from './audio.js?v=10.2';
+import { FEATURED_GAME_184609437048, FEATURED_GAME_173033536202, FEATURED_GAME_187075766028 } from './gameData.js?v=10.2';
+import { AdvantageChart } from './chart.js?v=10.2';
+import { GameReviewManager } from './gameReview.js?v=10.2';
+import { chessComApi } from './chessComApi.js?v=10.2';
 
 export function formatSanWithSymbol(san, color = 'w') {
   if (!san) return '';
@@ -926,6 +926,10 @@ class ChessTrainerApp {
   }
 
   loadGame(gameData) {
+    this.stopAutoPlay();
+    if (this.isTrialMode) {
+      this.exitTrialMode();
+    }
     this.currentGame = gameData;
 
     // Keep top URL search input synchronized with current game

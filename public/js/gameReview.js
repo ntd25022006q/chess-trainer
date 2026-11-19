@@ -306,7 +306,11 @@ export class GameReviewManager {
     if (chess.inCheck()) {
       if (chess.isCheckmate()) return chess.turn() === 'w' ? -20000 : 20000;
     }
-    if (chess.isDraw()) return 0;
+
+    const fen = chess.fen();
+    const fenTokens = fen.split(' ');
+    // Fast 50-move rule check without expensive threefold repetition / stalemate move generation
+    if (parseInt(fenTokens[4], 10) >= 100) return 0;
 
     const board = chess.board();
     let mgWhite = 0, mgBlack = 0, egWhite = 0, egBlack = 0;
@@ -338,8 +342,7 @@ export class GameReviewManager {
 
     // Castling rights heuristic: Having castling rights in the opening is vital
     // Premature King moves that forfeit castling rights incur a severe ~100 cp penalty
-    const fen = chess.fen();
-    const castling = (fen.split(' ')[2]) || '';
+    const castling = fenTokens[2] || '';
     if (castling.includes('K')) score += 50;
     if (castling.includes('Q')) score += 50;
     if (castling.includes('k')) score -= 50;
@@ -431,7 +434,7 @@ export class GameReviewManager {
       });
 
       for (const m of captures) {
-        chess.move(m.san);
+        chess.move({ from: m.from, to: m.to, promotion: m.promotion });
         const score = this.quiescence(chess, alpha, beta, depth + 1, maxDepth);
         chess.undo();
 
@@ -451,7 +454,7 @@ export class GameReviewManager {
       });
 
       for (const m of captures) {
-        chess.move(m.san);
+        chess.move({ from: m.from, to: m.to, promotion: m.promotion });
         const score = this.quiescence(chess, alpha, beta, depth + 1, maxDepth);
         chess.undo();
 

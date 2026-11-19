@@ -299,6 +299,7 @@ export class StockfishEngine {
 
       const lines = {};
       let resolved = false;
+      let safetyTimer = null;
 
       const tempHandler = (e) => {
         const line = e.data;
@@ -307,6 +308,7 @@ export class StockfishEngine {
         if (line.startsWith('bestmove')) {
           if (resolved) return;
           resolved = true;
+          if (safetyTimer) clearTimeout(safetyTimer);
           this.worker.removeEventListener('message', tempHandler);
           this.isReviewMode = false; // Unblock handleMessage
           const bm = line.split(' ')[1] || null;
@@ -322,7 +324,13 @@ export class StockfishEngine {
             secondWinChance: l2.winChance ?? null,
             secondScoreWhite: l2.scoreWhite ?? null
           };
-          if (this.evalCache) this.evalCache.set(fenKey, resObj);
+          if (this.evalCache) {
+            if (this.evalCache.size > 1000) {
+              const oldKey = this.evalCache.keys().next().value;
+              if (oldKey) this.evalCache.delete(oldKey);
+            }
+            this.evalCache.set(fenKey, resObj);
+          }
           resolve(resObj);
         } else if (line.startsWith('info') && line.includes('score')) {
           const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
@@ -385,7 +393,7 @@ export class StockfishEngine {
 
       // Adaptive safety timeout: 4x maxTime or max 800ms to guarantee zero UI/CDP freeze
       const timeoutMs = Math.max(800, (maxTimeMs || 60) * 4);
-      setTimeout(() => {
+      safetyTimer = setTimeout(() => {
         if (!resolved) {
           resolved = true;
           this.worker.removeEventListener('message', tempHandler);
@@ -402,7 +410,13 @@ export class StockfishEngine {
             secondWinChance: l2.winChance ?? null,
             secondScoreWhite: l2.scoreWhite ?? null
           };
-          if (this.evalCache) this.evalCache.set(fenKey, resObj);
+          if (this.evalCache) {
+            if (this.evalCache.size > 1000) {
+              const oldKey = this.evalCache.keys().next().value;
+              if (oldKey) this.evalCache.delete(oldKey);
+            }
+            this.evalCache.set(fenKey, resObj);
+          }
           resolve(resObj);
         }
       }, timeoutMs);
